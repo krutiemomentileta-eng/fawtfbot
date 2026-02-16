@@ -10,18 +10,73 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
-from supabase import create_client
 
 load_dotenv()
 
-BOT_TOKEN  = os.getenv("BOT_TOKEN", "")
-WEBAPP_URL = os.getenv("WEBAPP_URL", "")
-ADMIN_ID   = int(os.getenv("ADMIN_ID", "0"))
+BOT_TOKEN    = os.getenv("BOT_TOKEN", "")
+WEBAPP_URL   = os.getenv("WEBAPP_URL", "")
+ADMIN_ID     = int(os.getenv("ADMIN_ID", "0"))
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 app = FastAPI()
-db = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# ══════════════════════════════════════════════════
+#  SUPABASE REST CLIENT (без SDK — без проблем)
+# ══════════════════════════════════════════════════
+class SupabaseREST:
+    """Простой клиент для Supabase через REST API"""
+
+    def __init__(self, url, key):
+        self.base = f"{url}/rest/v1"
+        self.headers = {
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation",
+        }
+
+    def _req(self, method, table, params=None, data=None, headers_extra=None):
+        url = f"{self.base}/{table}"
+        h = {**self.headers}
+        if headers_extra:
+            h.update(headers_extra)
+        with httpx.Client() as client:
+            r = client.request(method, url, params=params, json=data, headers=h, timeout=15)
+            if r.status_code >= 400:
+                print(f"Supabase error: {r.status_code} {r.text}")
+                return []
+            try:
+                return r.json()
+            except:
+                return []
+
+    def select(self, table, filters=None, order=None, limit=None):
+        params = {"select": "*"}
+        if filters:
+            params.update(filters)
+        if order:
+            params["order"] = order
+        if limit:
+            params["limit"] = str(limit)
+        return self._req("GET", table, params=params)
+
+    def insert(self, table, data):
+        return self._req("POST", table, data=data)
+
+    def update(self, table, data, filters):
+        params = {}
+        if filters:
+            params.update(filters)
+        return self._req("PATCH", table, params=params, data=data)
+
+    def select_eq(self, table, column, value):
+        return self.select(table, {f"{column}": f"eq.{value}"})
+
+    def update_eq(self, table, data, column, value):
+        return self.update(table, data, {f"{column}": f"eq.{value}"})
+
+db = SupabaseREST(SUPABASE_URL, SUPABASE_KEY)
 
 # ══════════════════════════════════════════════════
 #  TELEGRAM API HELPERS
@@ -31,8 +86,7 @@ async def tg(method, data=None):
         try:
             r = await client.post(
                 f"https://api.telegram.org/bot{BOT_TOKEN}/{method}",
-                json=data or {},
-                timeout=15
+                json=data or {}, timeout=15
             )
             return r.json()
         except Exception as e:
@@ -46,7 +100,8 @@ async def send_msg(chat_id, text, markup=None):
     return await tg("sendMessage", data)
 
 async def edit_msg(chat_id, msg_id, text, markup=None):
-    data = {"chat_id": chat_id, "message_id": msg_id, "text": text, "parse_mode": "HTML"}
+    data = {"chat_id": chat_id, "message_id": msg_id,
+            "text": text, "parse_mode": "HTML"}
     if markup:
         data["reply_markup"] = markup
     return await tg("editMessageText", data)
@@ -149,9 +204,9 @@ def validate_init(raw):
 #  DB HELPERS
 # ══════════════════════════════════════════════════
 def get_or_create(tg_id, info=None):
-    r = db.table("users").select("*").eq("telegram_id", tg_id).execute()
-    if r.data:
-        return r.data[0]
+    rows = db.select_eq("users", "telegram_id", tg_id)
+    if rows:
+        return rows[0]
     u = {
         "telegram_id": tg_id,
         "username": (info or {}).get("username", ""),
@@ -159,16 +214,14 @@ def get_or_create(tg_id, info=None):
         "last_name": (info or {}).get("last_name", ""),
         "state": "new",
     }
-    r = db.table("users").insert(u).execute()
-    return r.data[0] if r.data else u
+    result = db.insert("users", u)
+    return result[0] if result else u
 
 def get_channels():
-    r = db.table("channels").select("*").eq("is_active", True).order("added_at").execute()
-    return r.data or []
+    return db.select("channels", {"is_active": "eq.true"}, order="added_at.asc")
 
 def get_prizes():
-    r = db.table("prizes").select("*").eq("is_active", True).order("sort_order").execute()
-    return r.data or []
+    return db.select("prizes", {"is_active": "eq.true"}, order="sort_order.asc")
 
 # ══════════════════════════════════════════════════
 #  API ENDPOINTS
@@ -219,12 +272,11 @@ async def api_check_sub(req: Request):
     if action == "save_roll":
         if user["state"] != "new":
             return JSONResponse({"error": "Already rolled"}, 400)
-        db.table("users").update({
+        db.update_eq("users", {
             "state": "rolled",
             "prize_key": body.get("prize_key", ""),
             "prize_name": body.get("prize_name", ""),
-            "rolled_at": "now()",
-        }).eq("telegram_id", tg_id).execute()
+        }, "telegram_id", tg_id)
         return {"ok": True, "state": "rolled"}
 
     if action == "check":
@@ -239,10 +291,7 @@ async def api_check_sub(req: Request):
 
         new_state = user["state"]
         if all_ok and user["state"] == "rolled":
-            db.table("users").update({
-                "state": "claimed",
-                "claimed_at": "now()",
-            }).eq("telegram_id", tg_id).execute()
+            db.update_eq("users", {"state": "claimed"}, "telegram_id", tg_id)
             new_state = "claimed"
 
         return {"ok": True, "all_subscribed": all_ok, "results": results, "state": new_state}
@@ -255,12 +304,10 @@ async def api_check_sub(req: Request):
 @app.post("/api/webhook")
 async def webhook(req: Request):
     body = await req.json()
-
     if "message" in body:
         await handle_message(body["message"])
     elif "callback_query" in body:
         await handle_callback(body["callback_query"])
-
     return {"ok": True}
 
 async def handle_message(msg):
@@ -292,20 +339,18 @@ async def handle_message(msg):
 
         if st == "add_channel":
             await process_add_channel(cid, text)
-        elif st.startswith("edit_prize:"):
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+        elif st and st.startswith("edit_prize:"):
             key = st.split(":")[1]
-            db.table("prizes").update({"name": text}).eq("key", key).execute()
-            db.table("users").update({"admin_state": ""}).eq("telegram_id", ADMIN_ID).execute()
+            db.update_eq("prizes", {"name": text}, "key", key)
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
             await send_msg(cid, f"✅ Приз переименован в: <b>{text}</b>")
-            return
-
-        db.table("users").update({"admin_state": ""}).eq("telegram_id", ADMIN_ID).execute()
 
 async def show_admin_menu(cid, msg_id=None):
     chs = get_channels()
     prs = get_prizes()
-    r = db.table("users").select("*").execute()
-    total = len(r.data) if r.data else 0
+    users = db.select("users")
+    total = len(users)
 
     text = (
         f"⚙️ <b>Панель администратора</b>\n\n"
@@ -319,7 +364,6 @@ async def show_admin_menu(cid, msg_id=None):
         [{"text": "📊 Статистика", "callback_data": "adm_stats"}],
         [{"text": "🔄 Обновить каналы", "callback_data": "adm_refresh"}],
     ]}
-
     if msg_id:
         await edit_msg(cid, msg_id, text, kb)
     else:
@@ -334,7 +378,7 @@ async def process_add_channel(cid, text):
             "❌ <b>Не удалось найти канал.</b>\n\n"
             "Убедитесь что бот — администратор канала.\n"
             "Отправьте @username или ссылку ещё раз:")
-        db.table("users").update({"admin_state": "add_channel"}).eq("telegram_id", ADMIN_ID).execute()
+        db.update_eq("users", {"admin_state": "add_channel"}, "telegram_id", ADMIN_ID)
         return
 
     bot_info = await tg("getMe")
@@ -343,19 +387,19 @@ async def process_add_channel(cid, text):
 
     if not bm.get("ok") or bm["result"]["status"] not in ("administrator", "creator"):
         await send_msg(cid,
-            f"⚠️ Бот не является администратором канала «{info['title']}».\n"
+            f"⚠️ Бот не является администратором «{info['title']}».\n"
             "Добавьте бота как админа и попробуйте снова.")
         return
 
-    existing = db.table("channels").select("id").eq("channel_id", info["channel_id"]).execute()
-    if existing.data:
-        db.table("channels").update({
+    existing = db.select_eq("channels", "channel_id", info["channel_id"])
+    if existing:
+        db.update_eq("channels", {
             "title": info["title"], "username": info["username"],
             "invite_link": info["invite_link"], "avatar_base64": info["avatar_base64"],
             "member_count": info["member_count"], "is_active": True,
-        }).eq("channel_id", info["channel_id"]).execute()
+        }, "channel_id", info["channel_id"])
     else:
-        db.table("channels").insert(info).execute()
+        db.insert("channels", info)
 
     avatar = "🖼" if info["avatar_base64"] else "📢"
     uname = f" (@{info['username']})" if info["username"] else ""
@@ -388,7 +432,7 @@ async def handle_callback(cb):
         for i, c in enumerate(chs, 1):
             av = "🖼" if c["avatar_base64"] else "📢"
             un = f" @{c['username']}" if c["username"] else ""
-            text += f"{i}. {av} <b>{c['title']}</b>{un}\n   👥 {c.get('member_count', 0)}\n\n"
+            text += f"{i}. {av} <b>{c['title']}</b>{un}\n   👥 {c.get('member_count',0)}\n\n"
 
         btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_ch:{c['channel_id']}"}] for c in chs]
         btns.append([{"text": "➕ Добавить канал", "callback_data": "adm_add_ch"}])
@@ -396,7 +440,7 @@ async def handle_callback(cb):
         await edit_msg(cid, mid, text, {"inline_keyboard": btns})
 
     elif data == "adm_add_ch":
-        db.table("users").update({"admin_state": "add_channel"}).eq("telegram_id", ADMIN_ID).execute()
+        db.update_eq("users", {"admin_state": "add_channel"}, "telegram_id", ADMIN_ID)
         await edit_msg(cid, mid,
             "📢 <b>Добавление канала</b>\n\n"
             "Отправьте @username канала или ссылку t.me/...\n\n"
@@ -405,16 +449,25 @@ async def handle_callback(cb):
 
     elif data.startswith("adm_del_ch:"):
         ch_id = int(data.split(":")[1])
-        db.table("channels").update({"is_active": False}).eq("channel_id", ch_id).execute()
-        await handle_callback({**cb, "data": "adm_channels"})
+        db.update_eq("channels", {"is_active": False}, "channel_id", ch_id)
+        # re-render
+        chs = get_channels()
+        text = "📢 <b>Каналы-спонсоры:</b>\n\n"
+        if not chs:
+            text += "Пусто."
+        for i, c in enumerate(chs, 1):
+            text += f"{i}. <b>{c['title']}</b>\n"
+        btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_ch:{c['channel_id']}"}] for c in chs]
+        btns.append([{"text": "➕ Добавить", "callback_data": "adm_add_ch"}])
+        btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
+        await edit_msg(cid, mid, text, {"inline_keyboard": btns})
 
     elif data == "adm_prizes":
-        prs = db.table("prizes").select("*").order("sort_order").execute().data or []
+        prs = db.select("prizes", order="sort_order.asc")
         text = "🎁 <b>Призы:</b>\n\n"
         for p in prs:
             s = "✅" if p["is_active"] else "❌"
             text += f"{s} {p['emoji']} <b>{p['name']}</b>\n   <code>{p['tgs_file']}</code>\n\n"
-
         btns = [[
             {"text": f"✏️ {p['name']}", "callback_data": f"adm_edit_pr:{p['key']}"},
             {"text": "🟢" if p["is_active"] else "🔴", "callback_data": f"adm_toggle_pr:{p['key']}"},
@@ -424,28 +477,39 @@ async def handle_callback(cb):
 
     elif data.startswith("adm_edit_pr:"):
         key = data.split(":")[1]
-        db.table("users").update({"admin_state": f"edit_prize:{key}"}).eq("telegram_id", ADMIN_ID).execute()
-        p = db.table("prizes").select("*").eq("key", key).execute()
-        name = p.data[0]["name"] if p.data else key
+        db.update_eq("users", {"admin_state": f"edit_prize:{key}"}, "telegram_id", ADMIN_ID)
+        p = db.select_eq("prizes", "key", key)
+        name = p[0]["name"] if p else key
         await edit_msg(cid, mid,
             f"✏️ Текущее название: <b>{name}</b>\n\nОтправьте новое:",
             {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_prizes"}]]})
 
     elif data.startswith("adm_toggle_pr:"):
         key = data.split(":")[1]
-        p = db.table("prizes").select("*").eq("key", key).execute()
-        if p.data:
-            db.table("prizes").update({"is_active": not p.data[0]["is_active"]}).eq("key", key).execute()
-        await handle_callback({**cb, "data": "adm_prizes"})
+        p = db.select_eq("prizes", "key", key)
+        if p:
+            db.update_eq("prizes", {"is_active": not p[0]["is_active"]}, "key", key)
+        # re-render prizes
+        prs = db.select("prizes", order="sort_order.asc")
+        text = "🎁 <b>Призы:</b>\n\n"
+        for p in prs:
+            s = "✅" if p["is_active"] else "❌"
+            text += f"{s} {p['emoji']} <b>{p['name']}</b>\n\n"
+        btns = [[
+            {"text": f"✏️ {p['name']}", "callback_data": f"adm_edit_pr:{p['key']}"},
+            {"text": "🟢" if p["is_active"] else "🔴", "callback_data": f"adm_toggle_pr:{p['key']}"},
+        ] for p in prs]
+        btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
+        await edit_msg(cid, mid, text, {"inline_keyboard": btns})
 
     elif data == "adm_stats":
-        users = db.table("users").select("state").execute().data or []
+        users = db.select("users")
         total = len(users)
         new = sum(1 for u in users if u["state"] == "new")
         rolled = sum(1 for u in users if u["state"] == "rolled")
         claimed = sum(1 for u in users if u["state"] == "claimed")
+        recent = db.select("users", order="created_at.desc", limit=5)
 
-        recent = db.table("users").select("*").order("created_at", desc=True).limit(5).execute()
         text = (
             f"📊 <b>Статистика</b>\n\n"
             f"👥 Всего: <b>{total}</b>\n"
@@ -455,9 +519,9 @@ async def handle_callback(cb):
             f"📈 Конверсия: <b>{round(((rolled+claimed)/total)*100) if total else 0}%</b> крутили → "
             f"<b>{round((claimed/total)*100) if total else 0}%</b> подписались\n"
         )
-        if recent.data:
+        if recent:
             text += "\n👤 <b>Последние:</b>\n"
-            for u in recent.data:
+            for u in recent:
                 n = u.get("first_name") or u.get("username") or str(u["telegram_id"])
                 text += f"  • {n} — {u['state']}"
                 if u.get("prize_name"):
@@ -472,18 +536,17 @@ async def handle_callback(cb):
         for c in chs:
             info = await parse_channel(str(c["channel_id"]))
             if info:
-                db.table("channels").update({
+                db.update_eq("channels", {
                     "title": info["title"], "username": info["username"],
                     "invite_link": info["invite_link"],
                     "avatar_base64": info["avatar_base64"],
                     "member_count": info["member_count"],
-                }).eq("channel_id", c["channel_id"]).execute()
+                }, "channel_id", c["channel_id"])
                 ok += 1
-        await answer_cb(cb["id"], f"✅ Обновлено {ok}/{len(chs)}", True)
         await show_admin_menu(cid, mid)
 
 # ══════════════════════════════════════════════════
-#  STATIC FILES + ROOT
+#  STATIC FILES
 # ══════════════════════════════════════════════════
 app.mount("/assets", StaticFiles(directory="public/assets"), name="assets")
 
@@ -493,14 +556,11 @@ async def root():
 
 @app.get("/{path:path}")
 async def catch_all(path: str):
-    file_path = f"public/{path}"
-    if os.path.isfile(file_path):
-        return FileResponse(file_path)
+    fp = f"public/{path}"
+    if os.path.isfile(fp):
+        return FileResponse(fp)
     return FileResponse("public/index.html")
 
-# ══════════════════════════════════════════════════
-#  RUN
-# ══════════════════════════════════════════════════
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
