@@ -38,6 +38,20 @@
         display: none !important;
       }
 
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
       #vfx-canvas {
         position: fixed;
         top: 0;
@@ -651,6 +665,11 @@
     <canvas id="vfx-canvas"></canvas>
     <div id="flash"></div>
     <div id="toast" class="toast"></div>
+
+    <div id="loading-screen">
+      <div class="loading-spinner"></div>
+      <p style="color: #aaa; font-size: 14px; margin-top: 15px">Загрузка...</p>
+    </div>
 
     <!-- SCENE 1: TAP -->
     <div id="main-scene">
@@ -1331,15 +1350,17 @@
       }
 
       async function init() {
-        // Telegram
+        // НЕ вызываем ready() пока не загрузим всё
         try {
-          Telegram.WebApp.ready();
           Telegram.WebApp.expand();
           Telegram.WebApp.setHeaderColor("#fefefe");
           Telegram.WebApp.setBackgroundColor("#fefefe");
         } catch (e) {}
 
-        // Загружаем состояние с сервера
+        // Скрываем всё кроме загрузки
+        document.getElementById("main-scene").classList.add("hidden");
+
+        // 1. Загружаем состояние с сервера
         try {
           const res = await apiCall("get-user");
           if (res.ok) {
@@ -1349,57 +1370,116 @@
           }
         } catch (e) {
           console.warn("API unavailable, local mode");
-          // Фоллбэк — локальные призы
           PRIZES = [
             {
               key: "prize1",
               tgs: "assets/prize1.tgs",
-              name: "100 Stars",
-              emoji: "⭐",
+              name: "Scared Cat",
+              emoji: "",
             },
             {
               key: "prize2",
               tgs: "assets/prize2.tgs",
-              name: "Подарок",
-              emoji: "🎁",
+              name: "Perfume Bottle",
+              emoji: "",
             },
             {
               key: "prize3",
               tgs: "assets/prize3.tgs",
               name: "Mini Oscar",
-              emoji: "🪙",
+              emoji: "",
             },
             {
               key: "prize4",
               tgs: "assets/prize4.tgs",
-              name: "Бриллиант",
-              emoji: "💎",
+              name: "Kissed Frog",
+              emoji: "",
             },
             {
               key: "prize5",
               tgs: "assets/prize5.tgs",
-              name: "Корона",
-              emoji: "👑",
+              name: "Swiss Watch",
+              emoji: "",
+            },
+            {
+              key: "prize6",
+              tgs: "assets/prize6.tgs",
+              name: "Signet Ring",
+              emoji: "",
+            },
+            {
+              key: "prize7",
+              tgs: "assets/prize7.tgs",
+              name: "Mad Pumpkin",
+              emoji: "",
+            },
+            {
+              key: "prize8",
+              tgs: "assets/prize8.tgs",
+              name: "Voodoo Doll",
+              emoji: "",
+            },
+            {
+              key: "prize9",
+              tgs: "assets/prize9.tgs",
+              name: "Magic Potion",
+              emoji: "",
+            },
+            {
+              key: "prize10",
+              tgs: "assets/prize10.tgs",
+              name: "Genie Lamp",
+              emoji: "",
+            },
+            {
+              key: "prize11",
+              tgs: "assets/prize11.tgs",
+              name: "Precious Peach",
+              emoji: "",
+            },
+            {
+              key: "prize12",
+              tgs: "assets/prize12.tgs",
+              name: "Astral Shard",
+              emoji: "",
+            },
+            {
+              key: "prize13",
+              tgs: "assets/prize13.tgs",
+              name: "Ion Gem",
+              emoji: "",
             },
           ];
         }
 
-        // Предзагрузка TGS
+        // 2. Загружаем ВСЕ TGS файлы
         const urls = [MAIN_STICKER_TGS, ...PRIZES.map((p) => p.tgs)];
         await Promise.all(urls.map((u) => loadTGS(u)));
 
-        // Роутинг по состоянию
+        // 3. Всё загружено — убираем загрузочный экран
+        const loadingScreen = document.getElementById("loading-screen");
+        gsap.to(loadingScreen, {
+          opacity: 0,
+          duration: 0.4,
+          onComplete: () => {
+            loadingScreen.classList.add("hidden");
+          },
+        });
+
+        // 4. Теперь сообщаем Telegram что приложение готово
+        try {
+          Telegram.WebApp.ready();
+        } catch (e) {}
+
+        // 5. Роутинг по состоянию
         if (USER_STATE?.state === "claimed") {
-          document.getElementById("main-scene").classList.add("hidden");
           ps.stop();
           showFinalModal();
           return;
         }
 
         if (USER_STATE?.state === "rolled") {
-          document.getElementById("main-scene").classList.add("hidden");
           ps.stop();
-          // Восстанавливаем winnerPrize
           winnerPrize =
             PRIZES.find((p) => p.key === USER_STATE.prize_key) || PRIZES[0];
           showSubscribeModal();
@@ -1407,6 +1487,7 @@
         }
 
         // state === 'new' — показываем рулетку
+        document.getElementById("main-scene").classList.remove("hidden");
         playLottieIn(
           document.getElementById("star-container"),
           MAIN_STICKER_TGS,
