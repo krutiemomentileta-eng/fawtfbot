@@ -828,7 +828,7 @@
             try {
               const anim = lottie.loadAnimation({
                 container,
-                renderer: "canvas", // canvas быстрее svg на мобилках!
+                renderer: "svg", // ← тут
                 loop: true,
                 autoplay: true,
                 animationData: JSON.parse(JSON.stringify(data)),
@@ -971,7 +971,7 @@
                 try {
                   anim = lottie.loadAnimation({
                     container: sd,
-                    renderer: "canvas",
+                    renderer: "svg",
                     loop: true,
                     autoplay: true,
                     animationData: JSON.parse(JSON.stringify(data)),
