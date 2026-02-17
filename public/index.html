@@ -1116,9 +1116,25 @@
             li.innerHTML = `
             <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" alt="" loading="lazy">` : "📢"}</div>
             <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
-            <a href="${ch.link}" target="_blank" class="channel-sub-btn" onclick="event.stopPropagation();">Подписаться</a>
+            <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>
         `;
             list.appendChild(li);
+          });
+
+          // Добавляем обработчики для кнопок подписки
+          document.querySelectorAll(".channel-sub-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const link = btn.getAttribute("data-link");
+              try {
+                // Используем Telegram WebApp API для открытия ссылки
+                // Это сворачивает Mini App вместо закрытия
+                Telegram.WebApp.openTelegramLink(link);
+              } catch (err) {
+                // Fallback для тестирования вне Telegram
+                window.open(link, "_blank");
+              }
+            });
           });
 
           overlay.classList.remove("hidden");
