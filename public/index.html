@@ -7,11 +7,28 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     <title>⭐ Tap & Win!</title>
+
+    <!-- Критичные скрипты — defer -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"
+    ></script>
+
+    <!-- lottie-web LIGHT build — в 2 раза легче -->
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"
+    ></script>
+
     <style>
       * {
         margin: 0;
@@ -23,12 +40,7 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        background: radial-gradient(
-          ellipse at 50% 40%,
-          #fff 0%,
-          #f8f9fa 50%,
-          #f0f1f3 100%
-        );
+        background: #fff;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         -webkit-tap-highlight-color: transparent;
         user-select: none;
@@ -38,6 +50,7 @@
         display: none !important;
       }
 
+      /* ===== LOADING ===== */
       #loading-screen {
         position: fixed;
         top: 0;
@@ -52,16 +65,28 @@
         z-index: 9999;
       }
 
-      #vfx-canvas {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
+      .loading-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid #eee;
+        border-top: 3px solid #ffd700;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
       }
 
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        color: #bbb;
+        font-size: 13px;
+        margin-top: 14px;
+      }
+
+      /* ===== FLASH ===== */
       #flash {
         position: fixed;
         top: 0;
@@ -95,6 +120,7 @@
         height: 260px;
       }
 
+      /* Лучи — чистый CSS, без canvas */
       #rays-container {
         position: absolute;
         width: 100%;
@@ -120,6 +146,7 @@
         border-radius: 2px;
         animation: ray-pulse 2s ease-in-out infinite;
         animation-delay: calc(var(--i) * 0.12s);
+        will-change: opacity, height;
       }
 
       @keyframes ray-pulse {
@@ -147,6 +174,7 @@
         filter: blur(15px);
         animation: glow-breathe 3s ease-in-out infinite;
         pointer-events: none;
+        will-change: transform, opacity;
       }
 
       @keyframes glow-breathe {
@@ -178,6 +206,7 @@
         font-size: 90px;
         animation: star-float 3s ease-in-out infinite;
         filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
+        will-change: transform;
       }
 
       @keyframes star-float {
@@ -201,6 +230,7 @@
         transform: translate(-50%, -50%);
         animation: pulse-expand 2s ease-out infinite;
         pointer-events: none;
+        will-change: transform, opacity;
       }
 
       @keyframes pulse-expand {
@@ -398,7 +428,7 @@
         pointer-events: none;
       }
 
-      /* ===== PRIZE RESULT MODAL ===== */
+      /* ===== MODALS ===== */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -471,7 +501,6 @@
       .btn-primary:active {
         transform: scale(0.95);
       }
-
       .btn-primary:disabled {
         opacity: 0.6;
         pointer-events: none;
@@ -512,7 +541,7 @@
         }
       }
 
-      /* ===== SUBSCRIBE MODAL ===== */
+      /* Subscribe */
       .subscribe-desc {
         font-size: 14px;
         color: #666;
@@ -543,12 +572,12 @@
         background: #e0e0e0;
         margin-right: 12px;
         flex-shrink: 0;
-        object-fit: cover;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 20px;
         color: #999;
+        overflow: hidden;
       }
 
       .channel-avatar img {
@@ -592,12 +621,10 @@
         background: #4caf50;
         pointer-events: none;
       }
-
       .channel-sub-btn:active {
         opacity: 0.8;
       }
 
-      /* Toast notification */
       .toast {
         position: fixed;
         top: 20px;
@@ -618,61 +645,39 @@
       .toast.show {
         transform: translateX(-50%) translateY(0);
       }
-
       .toast.success {
         background: #4caf50;
         box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
       }
 
-      /* ===== FINAL SCREEN ===== */
       .final-icon {
         font-size: 50px;
         margin-bottom: 15px;
       }
-
       .final-title {
         font-size: 18px;
         font-weight: 700;
         color: #333;
         margin-bottom: 10px;
       }
-
       .final-text {
         font-size: 14px;
         color: #888;
         line-height: 1.5;
       }
-
-      /* Loading */
-      .loading-spinner {
-        width: 30px;
-        height: 30px;
-        border: 3px solid #eee;
-        border-top: 3px solid #ffd700;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin: 20px auto;
-      }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
     </style>
   </head>
   <body>
-    <canvas id="vfx-canvas"></canvas>
+    <div id="loading-screen">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Загрузка...</p>
+    </div>
+
     <div id="flash"></div>
     <div id="toast" class="toast"></div>
 
-    <div id="loading-screen">
-      <div class="loading-spinner"></div>
-      <p style="color: #aaa; font-size: 14px; margin-top: 15px">Загрузка...</p>
-    </div>
-
     <!-- SCENE 1: TAP -->
-    <div id="main-scene">
+    <div id="main-scene" class="hidden">
       <div id="star-area">
         <div id="rays-container"></div>
         <div id="glow"></div>
@@ -717,15 +722,14 @@
       </div>
     </div>
 
-    <!-- MODAL: Prize result -->
+    <!-- MODAL: Prize -->
     <div id="modal-prize" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>ВАМ ВЫПАЛ:</h2>
         <div id="modal-prize-sticker" class="modal-sticker"></div>
         <p id="modal-prize-name" class="modal-prize-name"></p>
         <button id="btn-claim" class="btn-primary">
-          <span>ЗАБРАТЬ</span>
-          <span class="btn-shine"></span>
+          <span>ЗАБРАТЬ</span><span class="btn-shine"></span>
         </button>
       </div>
     </div>
@@ -741,13 +745,12 @@
         </p>
         <ul id="channel-list" class="channel-list"></ul>
         <button id="btn-check-sub" class="btn-primary">
-          <span>Проверить подписку</span>
-          <span class="btn-shine"></span>
+          <span>Проверить подписку</span><span class="btn-shine"></span>
         </button>
       </div>
     </div>
 
-    <!-- MODAL: Final (claimed) -->
+    <!-- MODAL: Final -->
     <div id="modal-final" class="modal-overlay hidden">
       <div class="modal-box">
         <div class="final-icon">✅</div>
@@ -761,864 +764,762 @@
     </div>
 
     <script>
-      // ==============================================================
-      //  CONFIG
-      // ==============================================================
-      const API_BASE = "/api";
-      const MAIN_STICKER_TGS = "assets/gift.tgs";
-      const MAIN_STICKER_EMOJI = "🎁";
-      const MAX_TAPS = 10;
-      const ROULETTE_TOTAL = 80;
-      const ITEM_W = 96;
-      const ITEM_GAP = 10;
-      const ITEM_STEP = ITEM_W + ITEM_GAP;
+      // Ждём загрузку всех defer-скриптов
+      window.addEventListener("DOMContentLoaded", () => {
+        // Проверяем что всё загрузилось
+        const waitForLibs = setInterval(() => {
+          if (
+            typeof gsap !== "undefined" &&
+            typeof confetti !== "undefined" &&
+            typeof lottie !== "undefined" &&
+            typeof pako !== "undefined"
+          ) {
+            clearInterval(waitForLibs);
+            startApp();
+          }
+        }, 50);
+      });
 
-      let PRIZES = [];
-      let CHANNELS = [];
-      let USER_STATE = null; // { state, prize_key, prize_name, ... }
+      function startApp() {
+        // ══════════════════════════════════════
+        //  CONFIG
+        // ══════════════════════════════════════
+        const API_BASE = "/api";
+        const MAIN_STICKER_TGS = "assets/gift.tgs";
+        const MAIN_STICKER_EMOJI = "🎁";
+        const MAX_TAPS = 10;
+        const ROULETTE_TOTAL = 80;
+        const ITEM_W = 96;
+        const ITEM_GAP = 10;
+        const ITEM_STEP = ITEM_W + ITEM_GAP;
 
-      // ==============================================================
-      //  TGS
-      // ==============================================================
-      const tgsCache = {};
-      async function loadTGS(url) {
-        if (tgsCache[url] !== undefined) return tgsCache[url];
-        try {
-          const r = await fetch(url);
-          if (!r.ok) throw new Error(r.status);
-          const buf = await r.arrayBuffer();
-          tgsCache[url] = JSON.parse(
-            pako.inflate(new Uint8Array(buf), { to: "string" }),
-          );
-          return tgsCache[url];
-        } catch (e) {
-          tgsCache[url] = null;
+        let PRIZES = [];
+        let CHANNELS = [];
+        let USER_STATE = null;
+
+        // ══════════════════════════════════════
+        //  TGS — оптимизированный загрузчик
+        // ══════════════════════════════════════
+        const tgsCache = {};
+
+        async function loadTGS(url) {
+          if (tgsCache[url] !== undefined) return tgsCache[url];
+          try {
+            const r = await fetch(url);
+            if (!r.ok) throw new Error(r.status);
+            const buf = await r.arrayBuffer();
+            tgsCache[url] = JSON.parse(
+              pako.inflate(new Uint8Array(buf), { to: "string" }),
+            );
+            return tgsCache[url];
+          } catch (e) {
+            tgsCache[url] = null;
+            return null;
+          }
+        }
+
+        // Только 1 активный lottie одновременно на мобилке!
+        let activeLotties = [];
+
+        function playLottieIn(container, tgsUrl, emoji) {
+          container.innerHTML = "";
+          const data = tgsCache[tgsUrl];
+          if (data) {
+            try {
+              const anim = lottie.loadAnimation({
+                container,
+                renderer: "canvas", // canvas быстрее svg на мобилках!
+                loop: true,
+                autoplay: true,
+                animationData: JSON.parse(JSON.stringify(data)),
+              });
+              activeLotties.push(anim);
+              return anim;
+            } catch (e) {}
+          }
+          container.textContent = emoji || "🎁";
           return null;
         }
-      }
 
-      let activeLotties = [];
-      function playLottieIn(container, tgsUrl, emoji) {
-        container.innerHTML = "";
-        const data = tgsCache[tgsUrl];
-        if (data) {
+        function destroyAllLotties() {
+          activeLotties.forEach((a) => {
+            try {
+              a.destroy();
+            } catch (e) {}
+          });
+          activeLotties = [];
+        }
+
+        // ══════════════════════════════════════
+        //  API
+        // ══════════════════════════════════════
+        function getInitData() {
           try {
-            const anim = lottie.loadAnimation({
-              container,
-              renderer: "svg",
-              loop: true,
-              autoplay: true,
-              animationData: JSON.parse(JSON.stringify(data)),
-            });
-            activeLotties.push(anim);
-            return anim;
-          } catch (e) {}
-        }
-        container.textContent = emoji || "🎁";
-        return null;
-      }
-
-      function destroyAllLotties() {
-        activeLotties.forEach((a) => {
-          try {
-            a.destroy();
-          } catch (e) {}
-        });
-        activeLotties = [];
-      }
-
-      // ==============================================================
-      //  API
-      // ==============================================================
-      function getInitData() {
-        try {
-          return Telegram.WebApp.initData;
-        } catch (e) {
-          return "";
-        }
-      }
-
-      async function apiCall(endpoint, body = {}) {
-        const res = await fetch(`${API_BASE}/${endpoint}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ initData: getInitData(), ...body }),
-        });
-        return res.json();
-      }
-
-      // ==============================================================
-      //  TOAST
-      // ==============================================================
-      function showToast(text, type = "error", ms = 3000) {
-        const t = document.getElementById("toast");
-        t.textContent = text;
-        t.className = "toast " + type;
-        requestAnimationFrame(() => t.classList.add("show"));
-        setTimeout(() => t.classList.remove("show"), ms);
-      }
-
-      // ==============================================================
-      //  PARTICLES
-      // ==============================================================
-      class Particles {
-        constructor(c) {
-          this.c = c;
-          this.ctx = c.getContext("2d");
-          this.p = [];
-          this.on = true;
-          this.resize();
-          window.addEventListener("resize", () => this.resize());
-        }
-        resize() {
-          const d = devicePixelRatio;
-          this.c.width = innerWidth * d;
-          this.c.height = innerHeight * d;
-          this.c.style.width = innerWidth + "px";
-          this.c.style.height = innerHeight + "px";
-          this.ctx.setTransform(d, 0, 0, d, 0, 0);
-        }
-        stop() {
-          this.on = false;
-        }
-        resume() {
-          if (!this.on) {
-            this.on = true;
-            this.tick();
+            return Telegram.WebApp.initData;
+          } catch (e) {
+            return "";
           }
         }
-        ambient(n = 12) {
-          for (let i = 0; i < n; i++)
-            this.p.push({
-              t: "a",
-              x: Math.random() * innerWidth,
-              y: Math.random() * innerHeight,
-              r: 1 + Math.random() * 2,
-              sx: (Math.random() - 0.5) * 0.2,
-              sy: (Math.random() - 0.5) * 0.2,
-              ph: Math.random() * 6.28,
-              op: 0.03 + Math.random() * 0.08,
-            });
+
+        async function apiCall(endpoint, body = {}) {
+          const res = await fetch(`${API_BASE}/${endpoint}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ initData: getInitData(), ...body }),
+          });
+          return res.json();
         }
-        burst(px, py, n = 8) {
-          for (let i = 0; i < n; i++) {
-            const a = (6.28 / n) * i,
-              s = 2 + Math.random() * 3;
-            this.p.push({
-              t: "b",
-              x: px,
-              y: py,
-              vx: Math.cos(a) * s,
-              vy: Math.sin(a) * s,
-              r: 1.5 + Math.random() * 2.5,
-              life: 1,
-              dec: 0.03 + Math.random() * 0.02,
-              col: ["#FFD700", "#FFA500", "#FF6B6B", "#fff"][
-                ~~(Math.random() * 4)
-              ],
-              g: 0.08,
-            });
+
+        // ══════════════════════════════════════
+        //  TOAST
+        // ══════════════════════════════════════
+        function showToast(text, type = "error", ms = 3000) {
+          const t = document.getElementById("toast");
+          t.textContent = text;
+          t.className = "toast " + type;
+          requestAnimationFrame(() => t.classList.add("show"));
+          setTimeout(() => t.classList.remove("show"), ms);
+        }
+
+        // ══════════════════════════════════════
+        //  SHAKE — без rAF спама, CSS transforms
+        // ══════════════════════════════════════
+        let shakeAmt = 0,
+          shakeFrozen = false,
+          shakeRaf = null;
+        const shakeEl = document.getElementById("main-scene");
+
+        function addShake(a) {
+          shakeAmt = Math.min(shakeAmt + a, 50);
+          if (!shakeRaf) runShake();
+        }
+
+        function freezeShake(a, ms) {
+          shakeAmt = a;
+          shakeFrozen = true;
+          if (!shakeRaf) runShake();
+          setTimeout(() => {
+            shakeFrozen = false;
+          }, ms);
+        }
+
+        function runShake() {
+          if (shakeAmt < 0.3 && !shakeFrozen) {
+            shakeEl.style.transform = "";
+            shakeRaf = null;
+            return;
+          }
+          shakeEl.style.transform = `translate(${(Math.random() - 0.5) * shakeAmt * 2}px,${(Math.random() - 0.5) * shakeAmt * 2}px)`;
+          if (!shakeFrozen) shakeAmt *= 0.88;
+          shakeRaf = requestAnimationFrame(runShake);
+        }
+
+        // ══════════════════════════════════════
+        //  ROULETTE — виртуализированная
+        // ══════════════════════════════════════
+        let winnerPrize = null,
+          winnerIndex = 0,
+          scrollOffset = 0;
+        const liveSlots = new Map();
+        const slotPrizes = [];
+        const strip = document.getElementById("roulette-strip");
+
+        function initRoulette() {
+          strip.innerHTML = "";
+          liveSlots.clear();
+          scrollOffset = 0;
+          slotPrizes.length = 0;
+          winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
+          winnerPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+          for (let i = 0; i < ROULETTE_TOTAL; i++) {
+            slotPrizes[i] =
+              i === winnerIndex ? winnerPrize : PRIZES[i % PRIZES.length];
           }
         }
-        explode(px, py, n = 60) {
-          for (let i = 0; i < n; i++) {
-            const a = Math.random() * 6.28,
-              s = 3 + Math.random() * 8;
-            this.p.push({
-              t: "b",
-              x: px,
-              y: py,
-              vx: Math.cos(a) * s,
-              vy: Math.sin(a) * s,
-              r: 1.5 + Math.random() * 3,
-              life: 1,
-              dec: 0.008 + Math.random() * 0.01,
-              col: [
-                "#FFD700",
-                "#FFA500",
-                "#FF6B6B",
-                "#FF69B4",
-                "#00CED1",
-                "#7B68EE",
-              ][~~(Math.random() * 6)],
-              g: 0.1,
-              fr: 0.98,
-            });
-          }
-        }
-        tick() {
-          if (!this.on) return;
-          const c = this.ctx;
-          c.clearRect(0, 0, innerWidth, innerHeight);
-          for (let i = this.p.length - 1; i >= 0; i--) {
-            const p = this.p[i];
-            if (p.t === "a") {
-              p.x += p.sx;
-              p.y += p.sy;
-              p.ph += 0.015;
-              c.fillStyle = `rgba(255,215,0,${p.op * (0.5 + 0.5 * Math.sin(p.ph))})`;
-              c.beginPath();
-              c.arc(p.x, p.y, p.r, 0, 6.28);
-              c.fill();
-              if (p.x < -10) p.x = innerWidth + 10;
-              if (p.x > innerWidth + 10) p.x = -10;
-              if (p.y < -10) p.y = innerHeight + 10;
-              if (p.y > innerHeight + 10) p.y = -10;
-            } else {
-              p.x += p.vx;
-              p.y += p.vy;
-              p.vy += p.g;
-              if (p.fr) {
-                p.vx *= p.fr;
-                p.vy *= p.fr;
-              }
-              p.life -= p.dec;
-              if (p.life <= 0) {
-                this.p.splice(i, 1);
-                continue;
-              }
-              c.globalAlpha = p.life;
-              c.fillStyle = p.col;
-              c.beginPath();
-              c.arc(p.x, p.y, p.r * p.life, 0, 6.28);
-              c.fill();
-              c.globalAlpha = 1;
+
+        function updateVisibleSlots() {
+          const vpW = document.getElementById("roulette-viewport").offsetWidth;
+          const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
+          const last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
+          const vMin = Math.max(0, first),
+            vMax = Math.min(ROULETTE_TOTAL - 1, last);
+
+          for (const [idx, slot] of liveSlots) {
+            if (idx < vMin || idx > vMax) {
+              if (slot.anim)
+                try {
+                  slot.anim.destroy();
+                } catch (e) {}
+              slot.el.remove();
+              liveSlots.delete(idx);
             }
           }
-          requestAnimationFrame(() => this.tick());
+
+          for (let i = vMin; i <= vMax; i++) {
+            if (liveSlots.has(i)) {
+              liveSlots.get(i).el.style.left =
+                10 + i * ITEM_STEP - scrollOffset + "px";
+            } else {
+              const prize = slotPrizes[i];
+              const item = document.createElement("div");
+              item.className = "roulette-item";
+              const sd = document.createElement("div");
+              sd.className = "roulette-sticker";
+              let anim = null;
+              const data = tgsCache[prize.tgs];
+              if (data) {
+                try {
+                  anim = lottie.loadAnimation({
+                    container: sd,
+                    renderer: "canvas",
+                    loop: true,
+                    autoplay: true,
+                    animationData: JSON.parse(JSON.stringify(data)),
+                  });
+                } catch (e) {
+                  sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
+                }
+              } else {
+                sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
+              }
+              item.appendChild(sd);
+              item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
+              strip.appendChild(item);
+              liveSlots.set(i, { el: item, anim });
+            }
+          }
         }
-      }
 
-      // ==============================================================
-      //  SHAKE
-      // ==============================================================
-      let shakeAmt = 0,
-        shakeFrozen = false,
-        shakeRaf = null;
-      const shakeEl = document.getElementById("main-scene");
-      function addShake(a) {
-        shakeAmt = Math.min(shakeAmt + a, 50);
-        if (!shakeRaf) runShake();
-      }
-      function freezeShake(a, ms) {
-        shakeAmt = a;
-        shakeFrozen = true;
-        if (!shakeRaf) runShake();
-        setTimeout(() => {
-          shakeFrozen = false;
-        }, ms);
-      }
-      function runShake() {
-        if (shakeAmt < 0.3 && !shakeFrozen) {
-          shakeEl.style.transform = "";
-          shakeRaf = null;
-          return;
+        function spinRoulette() {
+          const vpW = document.getElementById("roulette-viewport").offsetWidth;
+          const target =
+            10 +
+            winnerIndex * ITEM_STEP +
+            ITEM_W / 2 -
+            vpW / 2 +
+            (Math.random() - 0.5) * 15;
+          const obj = { val: 0 };
+          gsap.to(obj, {
+            val: target,
+            duration: 12,
+            ease: "power4.out",
+            force3D: true,
+            onUpdate: () => {
+              scrollOffset = obj.val;
+              updateVisibleSlots();
+            },
+            onComplete: onRouletteStop,
+          });
+          updateVisibleSlots();
         }
-        shakeEl.style.transform = `translate(${(Math.random() - 0.5) * shakeAmt * 2}px,${(Math.random() - 0.5) * shakeAmt * 2}px)`;
-        if (!shakeFrozen) shakeAmt *= 0.88;
-        shakeRaf = requestAnimationFrame(runShake);
-      }
 
-      // ==============================================================
-      //  ROULETTE (виртуализированная)
-      // ==============================================================
-      let winnerPrize = null,
-        winnerIndex = 0,
-        scrollOffset = 0;
-      const liveSlots = new Map();
-      const slotPrizes = [];
-      const strip = document.getElementById("roulette-strip");
+        function onRouletteStop() {
+          const slot = liveSlots.get(winnerIndex);
+          if (slot) {
+            gsap.to(slot.el, {
+              borderColor: "#FFD700",
+              boxShadow: "0 0 25px rgba(255,215,0,0.5)",
+              duration: 0.4,
+            });
+            gsap.to(slot.el, {
+              scale: 1.08,
+              duration: 0.3,
+              yoyo: true,
+              repeat: 2,
+              ease: "power2.inOut",
+            });
+          }
+          document.getElementById("roulette-title").textContent =
+            "🎉 Поздравляем!";
+          confetti({ particleCount: 80, spread: 80, origin: { y: 0.5 } });
+          apiCall("check-subscription", {
+            action: "save_roll",
+            prize_key: winnerPrize.key || winnerPrize.tgs,
+            prize_name: winnerPrize.name,
+          }).catch(() => {});
+          setTimeout(showPrizeModal, 1200);
+        }
 
-      function initRoulette() {
-        strip.innerHTML = "";
-        liveSlots.clear();
-        scrollOffset = 0;
-        slotPrizes.length = 0;
-        winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
-        winnerPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-        for (let i = 0; i < ROULETTE_TOTAL; i++)
-          slotPrizes[i] =
-            i === winnerIndex ? winnerPrize : PRIZES[i % PRIZES.length];
-      }
-
-      function updateVisibleSlots() {
-        const vpW = document.getElementById("roulette-viewport").offsetWidth;
-        const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
-        const last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
-        const vMin = Math.max(0, first),
-          vMax = Math.min(ROULETTE_TOTAL - 1, last);
-        for (const [idx, slot] of liveSlots) {
-          if (idx < vMin || idx > vMax) {
+        // ══════════════════════════════════════
+        //  MODALS
+        // ══════════════════════════════════════
+        function destroyRouletteLotties() {
+          for (const [idx, slot] of liveSlots) {
             if (slot.anim)
               try {
                 slot.anim.destroy();
               } catch (e) {}
-            slot.el.remove();
-            liveSlots.delete(idx);
+            slot.anim = null;
           }
         }
-        for (let i = vMin; i <= vMax; i++) {
-          if (liveSlots.has(i)) {
-            liveSlots.get(i).el.style.left =
-              10 + i * ITEM_STEP - scrollOffset + "px";
-          } else {
-            const prize = slotPrizes[i];
-            const item = document.createElement("div");
-            item.className = "roulette-item";
-            const sd = document.createElement("div");
-            sd.className = "roulette-sticker";
-            let anim = null;
-            const data = tgsCache[prize.tgs];
-            if (data) {
-              try {
-                anim = lottie.loadAnimation({
-                  container: sd,
-                  renderer: "svg",
-                  loop: true,
-                  autoplay: true,
-                  animationData: JSON.parse(JSON.stringify(data)),
-                });
-              } catch (e) {
-                sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
-              }
-            } else {
-              sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
-            }
-            item.appendChild(sd);
-            item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
-            strip.appendChild(item);
-            liveSlots.set(i, { el: item, anim });
-          }
-        }
-      }
 
-      function spinRoulette() {
-        const vpW = document.getElementById("roulette-viewport").offsetWidth;
-        const target =
-          10 +
-          winnerIndex * ITEM_STEP +
-          ITEM_W / 2 -
-          vpW / 2 +
-          (Math.random() - 0.5) * 15;
-        const obj = { val: 0 };
-        gsap.to(obj, {
-          val: target,
-          duration: 12,
-          ease: "power4.out",
-          onUpdate: () => {
-            scrollOffset = obj.val;
-            updateVisibleSlots();
-          },
-          onComplete: onRouletteStop,
-        });
-        updateVisibleSlots();
-      }
-
-      function onRouletteStop() {
-        const slot = liveSlots.get(winnerIndex);
-        if (slot) {
-          gsap.to(slot.el, {
-            borderColor: "#FFD700",
-            boxShadow: "0 0 25px rgba(255,215,0,0.5)",
-            duration: 0.4,
+        function showPrizeModal() {
+          destroyRouletteLotties();
+          const overlay = document.getElementById("modal-prize");
+          document.getElementById("modal-prize-name").textContent =
+            winnerPrize.name;
+          playLottieIn(
+            document.getElementById("modal-prize-sticker"),
+            winnerPrize.tgs,
+            winnerPrize.emoji,
+          );
+          overlay.classList.remove("hidden");
+          overlay.style.opacity = "0";
+          gsap.to(overlay, { opacity: 1, duration: 0.3 });
+          gsap.from(overlay.querySelector(".modal-box"), {
+            scale: 0.5,
+            y: 40,
+            opacity: 0,
+            duration: 0.5,
+            ease: "back.out(1.7)",
+            delay: 0.1,
           });
-          gsap.to(slot.el, {
-            scale: 1.08,
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
+        }
+
+        document.getElementById("btn-claim").addEventListener("click", () => {
+          confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
+          gsap.to("#modal-prize .modal-box", {
+            scale: 0,
+            opacity: 0,
             duration: 0.3,
-            yoyo: true,
-            repeat: 2,
-            ease: "power2.inOut",
+            ease: "back.in(2)",
+            onComplete: () => {
+              document.getElementById("modal-prize").classList.add("hidden");
+              showSubscribeModal();
+            },
+          });
+        });
+
+        function showSubscribeModal() {
+          destroyAllLotties();
+          const overlay = document.getElementById("modal-subscribe");
+          const pName = winnerPrize
+            ? winnerPrize.name
+            : USER_STATE?.prize_name || "Приз";
+          document.getElementById("sub-prize-name").textContent = pName;
+
+          const tgsUrl = winnerPrize
+            ? winnerPrize.tgs
+            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
+          const emoji = winnerPrize
+            ? winnerPrize.emoji
+            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
+          if (tgsUrl)
+            playLottieIn(document.getElementById("sub-sticker"), tgsUrl, emoji);
+
+          const list = document.getElementById("channel-list");
+          list.innerHTML = "";
+          CHANNELS.forEach((ch) => {
+            const li = document.createElement("li");
+            li.className = "channel-item";
+            li.innerHTML = `
+            <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" alt="" loading="lazy">` : "📢"}</div>
+            <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
+            <a href="${ch.link}" target="_blank" class="channel-sub-btn" onclick="event.stopPropagation();">Подписаться</a>
+        `;
+            list.appendChild(li);
+          });
+
+          overlay.classList.remove("hidden");
+          overlay.style.opacity = "0";
+          gsap.to(overlay, { opacity: 1, duration: 0.3 });
+          gsap.from(overlay.querySelector(".modal-box"), {
+            scale: 0.5,
+            y: 40,
+            opacity: 0,
+            duration: 0.5,
+            ease: "back.out(1.7)",
+            delay: 0.1,
           });
         }
-        document.getElementById("roulette-title").textContent =
-          "🎉 Поздравляем!";
-        confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
-        // Сохраняем результат на сервер
-        apiCall("check-subscription", {
-          action: "save_roll",
-          prize_key: winnerPrize.key || winnerPrize.tgs,
-          prize_name: winnerPrize.name,
-        }).catch(() => {});
-        setTimeout(showPrizeModal, 1200);
-      }
 
-      // ==============================================================
-      //  MODALS
-      // ==============================================================
+        document
+          .getElementById("btn-check-sub")
+          .addEventListener("click", async () => {
+            const btn = document.getElementById("btn-check-sub");
+            btn.disabled = true;
+            btn.querySelector("span").textContent = "Проверяем...";
 
-      // --- Prize Modal ---
-      function showPrizeModal() {
-        destroyRouletteLotties();
-        const overlay = document.getElementById("modal-prize");
-        document.getElementById("modal-prize-name").textContent =
-          winnerPrize.name;
-        playLottieIn(
-          document.getElementById("modal-prize-sticker"),
-          winnerPrize.tgs,
-          winnerPrize.emoji,
-        );
-        overlay.classList.remove("hidden");
-        overlay.style.opacity = "0";
-        gsap.to(overlay, { opacity: 1, duration: 0.3 });
-        gsap.from(overlay.querySelector(".modal-box"), {
-          scale: 0.5,
-          y: 40,
-          opacity: 0,
-          duration: 0.5,
-          ease: "back.out(1.7)",
-          delay: 0.1,
-        });
-        confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
-      }
-
-      document.getElementById("btn-claim").addEventListener("click", () => {
-        confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
-        gsap.to("#modal-prize .modal-box", {
-          scale: 0,
-          opacity: 0,
-          duration: 0.3,
-          ease: "back.in(2)",
-          onComplete: () => {
-            document.getElementById("modal-prize").classList.add("hidden");
-            showSubscribeModal();
-          },
-        });
-      });
-
-      // --- Subscribe Modal ---
-      function showSubscribeModal() {
-        destroyAllLotties();
-        const overlay = document.getElementById("modal-subscribe");
-        document.getElementById("sub-prize-name").textContent = winnerPrize
-          ? winnerPrize.name
-          : USER_STATE?.prize_name || "Приз";
-
-        const tgsUrl = winnerPrize
-          ? winnerPrize.tgs
-          : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-        const emoji = winnerPrize
-          ? winnerPrize.emoji
-          : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-        if (tgsUrl)
-          playLottieIn(document.getElementById("sub-sticker"), tgsUrl, emoji);
-
-        // Список каналов
-        const list = document.getElementById("channel-list");
-        list.innerHTML = "";
-        CHANNELS.forEach((ch) => {
-          const li = document.createElement("li");
-          li.className = "channel-item";
-          li.innerHTML = `
-            <div class="channel-avatar">
-                ${ch.avatar ? `<img src="${ch.avatar}" alt="">` : "📢"}
-            </div>
-            <div class="channel-info">
-                <div class="channel-name">${ch.name}</div>
-            </div>
-            <a href="${ch.link}" target="_blank" class="channel-sub-btn" 
-               onclick="event.stopPropagation();">Подписаться</a>
-        `;
-          list.appendChild(li);
-        });
-
-        overlay.classList.remove("hidden");
-        overlay.style.opacity = "0";
-        gsap.to(overlay, { opacity: 1, duration: 0.3 });
-        gsap.from(overlay.querySelector(".modal-box"), {
-          scale: 0.5,
-          y: 40,
-          opacity: 0,
-          duration: 0.5,
-          ease: "back.out(1.7)",
-          delay: 0.1,
-        });
-      }
-
-      document
-        .getElementById("btn-check-sub")
-        .addEventListener("click", async () => {
-          const btn = document.getElementById("btn-check-sub");
-          btn.disabled = true;
-          btn.querySelector("span").textContent = "Проверяем...";
-
-          try {
-            const res = await apiCall("check-subscription", {
-              action: "check",
-            });
-            if (res.all_subscribed) {
-              // Обновляем кнопки на "✓"
-              document.querySelectorAll(".channel-sub-btn").forEach((b) => {
-                b.textContent = "✓";
-                b.classList.add("done");
+            try {
+              const res = await apiCall("check-subscription", {
+                action: "check",
               });
-              showToast("Все подписки подтверждены!", "success");
-              await sleep(1000);
-              gsap.to("#modal-subscribe .modal-box", {
-                scale: 0,
-                opacity: 0,
-                duration: 0.3,
-                onComplete: () => {
-                  document
-                    .getElementById("modal-subscribe")
-                    .classList.add("hidden");
-                  showFinalModal();
-                },
-              });
-            } else {
-              // Подсвечиваем неподписанные
-              const items = document.querySelectorAll(".channel-item");
-              CHANNELS.forEach((ch, i) => {
-                const btn2 = items[i]?.querySelector(".channel-sub-btn");
-                if (btn2) {
-                  if (res.results[String(ch.id)]) {
-                    btn2.textContent = "✓";
-                    btn2.classList.add("done");
-                  } else {
-                    btn2.textContent = "Подписаться";
-                    btn2.classList.remove("done");
+              if (res.all_subscribed) {
+                document.querySelectorAll(".channel-sub-btn").forEach((b) => {
+                  b.textContent = "✓";
+                  b.classList.add("done");
+                });
+                showToast("Все подписки подтверждены!", "success");
+                await sleep(1000);
+                gsap.to("#modal-subscribe .modal-box", {
+                  scale: 0,
+                  opacity: 0,
+                  duration: 0.3,
+                  onComplete: () => {
+                    document
+                      .getElementById("modal-subscribe")
+                      .classList.add("hidden");
+                    showFinalModal();
+                  },
+                });
+              } else {
+                const items = document.querySelectorAll(".channel-item");
+                CHANNELS.forEach((ch, i) => {
+                  const b = items[i]?.querySelector(".channel-sub-btn");
+                  if (b) {
+                    if (res.results[String(ch.id)]) {
+                      b.textContent = "✓";
+                      b.classList.add("done");
+                    } else {
+                      b.textContent = "Подписаться";
+                      b.classList.remove("done");
+                    }
                   }
-                }
-              });
-              showToast("Подпишитесь на все каналы!", "error");
-              try {
-                Telegram.WebApp.HapticFeedback.notificationOccurred("error");
-              } catch (e) {}
+                });
+                showToast("Подпишитесь на все каналы!", "error");
+                try {
+                  Telegram.WebApp.HapticFeedback.notificationOccurred("error");
+                } catch (e) {}
+              }
+            } catch (e) {
+              showToast("Ошибка, попробуйте позже", "error");
+            }
+
+            btn.disabled = false;
+            btn.querySelector("span").textContent = "Проверить подписку";
+          });
+
+        function showFinalModal() {
+          destroyAllLotties();
+          const overlay = document.getElementById("modal-final");
+          const pName = winnerPrize
+            ? winnerPrize.name
+            : USER_STATE?.prize_name || "Приз";
+          document.getElementById("final-prize-name").textContent = pName;
+
+          const tgsUrl = winnerPrize
+            ? winnerPrize.tgs
+            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
+          const emoji = winnerPrize
+            ? winnerPrize.emoji
+            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
+          if (tgsUrl)
+            playLottieIn(
+              document.getElementById("final-sticker"),
+              tgsUrl,
+              emoji,
+            );
+
+          overlay.classList.remove("hidden");
+          overlay.style.opacity = "0";
+          gsap.to(overlay, { opacity: 1, duration: 0.3 });
+          gsap.from(overlay.querySelector(".modal-box"), {
+            scale: 0.5,
+            y: 40,
+            opacity: 0,
+            duration: 0.5,
+            ease: "back.out(1.7)",
+            delay: 0.1,
+          });
+          confetti({ particleCount: 100, spread: 120, origin: { y: 0.5 } });
+        }
+
+        // ══════════════════════════════════════
+        //  INIT
+        // ══════════════════════════════════════
+        // Лучи — создаём через JS, не грузим DOM сразу
+        const raysBox = document.getElementById("rays-container");
+        for (let i = 0; i < 12; i++) {
+          const r = document.createElement("div");
+          r.className = "ray";
+          r.style.setProperty("--i", i);
+          raysBox.appendChild(r);
+        }
+
+        async function init() {
+          try {
+            Telegram.WebApp.expand();
+            Telegram.WebApp.setHeaderColor("#ffffff");
+            Telegram.WebApp.setBackgroundColor("#ffffff");
+          } catch (e) {}
+
+          // 1. API — состояние юзера
+          try {
+            const res = await apiCall("get-user");
+            if (res.ok) {
+              USER_STATE = res.user;
+              CHANNELS = res.channels || [];
+              PRIZES = res.prizes || [];
             }
           } catch (e) {
-            showToast("Ошибка проверки, попробуйте позже", "error");
+            console.warn("API fail, local mode");
+            PRIZES = [
+              {
+                key: "prize1",
+                tgs: "assets/prize1.tgs",
+                name: "Scared Cat",
+                emoji: "",
+              },
+              {
+                key: "prize2",
+                tgs: "assets/prize2.tgs",
+                name: "Perfume Bottle",
+                emoji: "",
+              },
+              {
+                key: "prize3",
+                tgs: "assets/prize3.tgs",
+                name: "Mini Oscar",
+                emoji: "",
+              },
+              {
+                key: "prize4",
+                tgs: "assets/prize4.tgs",
+                name: "Kissed Frog",
+                emoji: "",
+              },
+              {
+                key: "prize5",
+                tgs: "assets/prize5.tgs",
+                name: "Swiss Watch",
+                emoji: "",
+              },
+              {
+                key: "prize6",
+                tgs: "assets/prize6.tgs",
+                name: "Signet Ring",
+                emoji: "",
+              },
+              {
+                key: "prize7",
+                tgs: "assets/prize7.tgs",
+                name: "Mad Pumpkin",
+                emoji: "",
+              },
+              {
+                key: "prize8",
+                tgs: "assets/prize8.tgs",
+                name: "Voodoo Doll",
+                emoji: "",
+              },
+              {
+                key: "prize9",
+                tgs: "assets/prize9.tgs",
+                name: "Magic Potion",
+                emoji: "",
+              },
+              {
+                key: "prize10",
+                tgs: "assets/prize10.tgs",
+                name: "Genie Lamp",
+                emoji: "",
+              },
+              {
+                key: "prize11",
+                tgs: "assets/prize11.tgs",
+                name: "Precious Peach",
+                emoji: "",
+              },
+              {
+                key: "prize12",
+                tgs: "assets/prize12.tgs",
+                name: "Astral Shard",
+                emoji: "",
+              },
+              {
+                key: "prize13",
+                tgs: "assets/prize13.tgs",
+                name: "Ion Gem",
+                emoji: "",
+              },
+            ];
           }
 
-          btn.disabled = false;
-          btn.querySelector("span").textContent = "Проверить подписку";
-        });
-
-      // --- Final Modal ---
-      function showFinalModal() {
-        destroyAllLotties();
-        const overlay = document.getElementById("modal-final");
-        const pName = winnerPrize
-          ? winnerPrize.name
-          : USER_STATE?.prize_name || "Приз";
-        document.getElementById("final-prize-name").textContent = pName;
-
-        const tgsUrl = winnerPrize
-          ? winnerPrize.tgs
-          : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-        const emoji = winnerPrize
-          ? winnerPrize.emoji
-          : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-        if (tgsUrl)
-          playLottieIn(document.getElementById("final-sticker"), tgsUrl, emoji);
-
-        overlay.classList.remove("hidden");
-        overlay.style.opacity = "0";
-        gsap.to(overlay, { opacity: 1, duration: 0.3 });
-        gsap.from(overlay.querySelector(".modal-box"), {
-          scale: 0.5,
-          y: 40,
-          opacity: 0,
-          duration: 0.5,
-          ease: "back.out(1.7)",
-          delay: 0.1,
-        });
-        confetti({ particleCount: 200, spread: 160, origin: { y: 0.5 } });
-      }
-
-      function destroyRouletteLotties() {
-        for (const [idx, slot] of liveSlots) {
-          if (slot.anim)
-            try {
-              slot.anim.destroy();
-            } catch (e) {}
-          slot.anim = null;
-        }
-      }
-
-      // ==============================================================
-      //  INIT + STATE ROUTING
-      // ==============================================================
-      const ps = new Particles(document.getElementById("vfx-canvas"));
-      ps.ambient();
-      ps.tick();
-
-      const raysBox = document.getElementById("rays-container");
-      for (let i = 0; i < 12; i++) {
-        const r = document.createElement("div");
-        r.className = "ray";
-        r.style.setProperty("--i", i);
-        raysBox.appendChild(r);
-      }
-
-      async function init() {
-        // НЕ вызываем ready() пока не загрузим всё
-        try {
-          Telegram.WebApp.expand();
-          Telegram.WebApp.setHeaderColor("#fefefe");
-          Telegram.WebApp.setBackgroundColor("#fefefe");
-        } catch (e) {}
-
-        // Скрываем всё кроме загрузки
-        document.getElementById("main-scene").classList.add("hidden");
-
-        // 1. Загружаем состояние с сервера
-        try {
-          const res = await apiCall("get-user");
-          if (res.ok) {
-            USER_STATE = res.user;
-            CHANNELS = res.channels || [];
-            PRIZES = res.prizes || PRIZES;
+          // 2. Загружаем только НУЖНЫЕ TGS
+          // Для new: главный стикер
+          // Для rolled/claimed: только стикер приза
+          if (USER_STATE?.state === "new" || !USER_STATE) {
+            // Грузим главный + все призы (для рулетки)
+            await loadTGS(MAIN_STICKER_TGS);
+            await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
+          } else {
+            // Грузим только стикер выигранного приза
+            const prizeUrl = PRIZES.find(
+              (p) => p.key === USER_STATE.prize_key,
+            )?.tgs;
+            if (prizeUrl) await loadTGS(prizeUrl);
           }
-        } catch (e) {
-          console.warn("API unavailable, local mode");
-          PRIZES = [
-            {
-              key: "prize1",
-              tgs: "assets/prize1.tgs",
-              name: "Scared Cat",
-              emoji: "",
-            },
-            {
-              key: "prize2",
-              tgs: "assets/prize2.tgs",
-              name: "Perfume Bottle",
-              emoji: "",
-            },
-            {
-              key: "prize3",
-              tgs: "assets/prize3.tgs",
-              name: "Mini Oscar",
-              emoji: "",
-            },
-            {
-              key: "prize4",
-              tgs: "assets/prize4.tgs",
-              name: "Kissed Frog",
-              emoji: "",
-            },
-            {
-              key: "prize5",
-              tgs: "assets/prize5.tgs",
-              name: "Swiss Watch",
-              emoji: "",
-            },
-            {
-              key: "prize6",
-              tgs: "assets/prize6.tgs",
-              name: "Signet Ring",
-              emoji: "",
-            },
-            {
-              key: "prize7",
-              tgs: "assets/prize7.tgs",
-              name: "Mad Pumpkin",
-              emoji: "",
-            },
-            {
-              key: "prize8",
-              tgs: "assets/prize8.tgs",
-              name: "Voodoo Doll",
-              emoji: "",
-            },
-            {
-              key: "prize9",
-              tgs: "assets/prize9.tgs",
-              name: "Magic Potion",
-              emoji: "",
-            },
-            {
-              key: "prize10",
-              tgs: "assets/prize10.tgs",
-              name: "Genie Lamp",
-              emoji: "",
-            },
-            {
-              key: "prize11",
-              tgs: "assets/prize11.tgs",
-              name: "Precious Peach",
-              emoji: "",
-            },
-            {
-              key: "prize12",
-              tgs: "assets/prize12.tgs",
-              name: "Astral Shard",
-              emoji: "",
-            },
-            {
-              key: "prize13",
-              tgs: "assets/prize13.tgs",
-              name: "Ion Gem",
-              emoji: "",
-            },
-          ];
-        }
 
-        // 2. Загружаем ВСЕ TGS файлы
-        const urls = [MAIN_STICKER_TGS, ...PRIZES.map((p) => p.tgs)];
-        await Promise.all(urls.map((u) => loadTGS(u)));
+          // 3. Убираем загрузочный экран
+          const ls = document.getElementById("loading-screen");
+          gsap.to(ls, {
+            opacity: 0,
+            duration: 0.3,
+            onComplete: () => ls.classList.add("hidden"),
+          });
 
-        // 3. Всё загружено — убираем загрузочный экран
-        const loadingScreen = document.getElementById("loading-screen");
-        gsap.to(loadingScreen, {
-          opacity: 0,
-          duration: 0.4,
-          onComplete: () => {
-            loadingScreen.classList.add("hidden");
-          },
-        });
-
-        // 4. Теперь сообщаем Telegram что приложение готово
-        try {
-          Telegram.WebApp.ready();
-        } catch (e) {}
-
-        // 5. Роутинг по состоянию
-        if (USER_STATE?.state === "claimed") {
-          ps.stop();
-          showFinalModal();
-          return;
-        }
-
-        if (USER_STATE?.state === "rolled") {
-          ps.stop();
-          winnerPrize =
-            PRIZES.find((p) => p.key === USER_STATE.prize_key) || PRIZES[0];
-          showSubscribeModal();
-          return;
-        }
-
-        // state === 'new' — показываем рулетку
-        document.getElementById("main-scene").classList.remove("hidden");
-        playLottieIn(
-          document.getElementById("star-container"),
-          MAIN_STICKER_TGS,
-          MAIN_STICKER_EMOJI,
-        );
-
-        gsap
-          .timeline()
-          .from("#star-area", {
-            scale: 0,
-            rotation: 720,
-            duration: 1.2,
-            ease: "elastic.out(1,0.3)",
-          })
-          .from(
-            ".ray",
-            { height: 0, opacity: 0, duration: 0.5, stagger: 0.04 },
-            "-=0.6",
-          )
-          .from("#glow", { scale: 0, opacity: 0, duration: 0.6 }, "-=0.7")
-          .from(
-            "#tap-text",
-            { y: 25, opacity: 0, duration: 0.4, ease: "back.out(1.7)" },
-            "-=0.2",
-          )
-          .from("#tap-counter", { y: 15, opacity: 0, duration: 0.3 }, "-=0.1");
-      }
-
-      init();
-
-      // ==============================================================
-      //  TAP
-      // ==============================================================
-      let tapCount = 0,
-        isFinished = false;
-
-      document
-        .getElementById("star-wrapper")
-        .addEventListener("pointerdown", (e) => {
-          e.preventDefault();
-          if (isFinished) return;
-          tapCount++;
-          const progress = tapCount / MAX_TAPS,
-            sc = 1 + tapCount * 0.07;
+          // 4. Telegram ready
           try {
-            Telegram.WebApp.HapticFeedback.impactOccurred("medium");
+            Telegram.WebApp.ready();
           } catch (e) {}
-          gsap.to("#star-container", {
-            scale: sc + 0.15,
-            duration: 0.08,
-            onComplete: () =>
-              gsap.to("#star-container", {
-                scale: sc,
-                duration: 0.25,
-                ease: "elastic.out(1,0.3)",
-              }),
-          });
-          gsap.to("#glow", {
-            scale: 1 + progress * 0.9,
-            opacity: 0.5 + progress * 0.5,
-            duration: 0.15,
-          });
-          gsap.to(".ray", {
-            height: 130 + progress * 90,
-            opacity: 0.2 + progress * 0.7,
-            duration: 0.15,
-          });
-          document.getElementById("progress-fill").style.width =
-            `${progress * 100}%`;
-          document.getElementById("counter-text").textContent =
-            `${tapCount} / ${MAX_TAPS}`;
-          const ft = document.createElement("div");
-          ft.className = "tap-effect";
-          ft.textContent = ["+1", "⭐", "✨", "💫"][~~(Math.random() * 4)];
-          ft.style.left = e.clientX + (Math.random() - 0.5) * 30 + "px";
-          ft.style.top = e.clientY - 15 + "px";
-          document.body.appendChild(ft);
-          setTimeout(() => ft.remove(), 700);
-          ps.burst(e.clientX, e.clientY);
-          if (tapCount < MAX_TAPS) addShake(3 + tapCount * 0.7);
-          const hue = 45 + progress * 25;
-          document.body.style.background = `radial-gradient(ellipse at 50% 40%,hsl(${hue},80%,98%),hsl(${hue},30%,96%),hsl(${hue},20%,94%))`;
-          if (tapCount >= MAX_TAPS) {
-            isFinished = true;
-            startFinale();
+
+          // 5. Роутинг
+          if (USER_STATE?.state === "claimed") {
+            showFinalModal();
+            return;
           }
-        });
 
-      // ==============================================================
-      //  FINALE
-      // ==============================================================
-      async function startFinale() {
-        freezeShake(28, 3000);
-        gsap.to("#star-container", {
-          scale: 2.2,
-          filter: "brightness(2.5) drop-shadow(0 0 50px rgba(255,215,0,1))",
-          duration: 2.5,
-          ease: "power1.in",
-        });
-        gsap.to("#glow", { scale: 3, opacity: 1, duration: 2.5 });
-        gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
-        const burstLoop = setInterval(() => {
-          const r = document
-            .getElementById("star-container")
-            .getBoundingClientRect();
-          ps.burst(r.left + r.width / 2, r.top + r.height / 2, 5);
-        }, 300);
-        await sleep(3000);
-        clearInterval(burstLoop);
-        const r = document
-          .getElementById("star-container")
-          .getBoundingClientRect();
-        ps.explode(r.left + r.width / 2, r.top + r.height / 2, 50);
-        confetti({ particleCount: 50, spread: 50, origin: { x: 0.5, y: 0.4 } });
-        destroyAllLotties();
-        gsap.to("#flash", { opacity: 1, duration: 1, ease: "power2.in" });
-        await sleep(1000);
-        document.getElementById("main-scene").classList.add("hidden");
-        shakeAmt = 0;
-        shakeFrozen = false;
-        ps.stop();
-        initRoulette();
-        document.getElementById("roulette-scene").classList.remove("hidden");
-        spinRoulette();
-        await sleep(400);
-        gsap.to("#flash", { opacity: 0, duration: 1.2, ease: "power2.out" });
-      }
+          if (USER_STATE?.state === "rolled") {
+            winnerPrize =
+              PRIZES.find((p) => p.key === USER_STATE.prize_key) || PRIZES[0];
+            showSubscribeModal();
+            return;
+          }
 
-      function sleep(ms) {
-        return new Promise((r) => setTimeout(r, ms));
-      }
+          // new — показываем игру
+          document.getElementById("main-scene").classList.remove("hidden");
+          playLottieIn(
+            document.getElementById("star-container"),
+            MAIN_STICKER_TGS,
+            MAIN_STICKER_EMOJI,
+          );
+
+          gsap
+            .timeline()
+            .from("#star-area", {
+              scale: 0,
+              rotation: 720,
+              duration: 1.2,
+              ease: "elastic.out(1,0.3)",
+            })
+            .from(
+              ".ray",
+              { height: 0, opacity: 0, duration: 0.5, stagger: 0.04 },
+              "-=0.6",
+            )
+            .from("#glow", { scale: 0, opacity: 0, duration: 0.6 }, "-=0.7")
+            .from(
+              "#tap-text",
+              { y: 25, opacity: 0, duration: 0.4, ease: "back.out(1.7)" },
+              "-=0.2",
+            )
+            .from(
+              "#tap-counter",
+              { y: 15, opacity: 0, duration: 0.3 },
+              "-=0.1",
+            );
+        }
+
+        init();
+
+        // ══════════════════════════════════════
+        //  TAP
+        // ══════════════════════════════════════
+        let tapCount = 0,
+          isFinished = false;
+
+        document
+          .getElementById("star-wrapper")
+          .addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            if (isFinished) return;
+            tapCount++;
+            const progress = tapCount / MAX_TAPS,
+              sc = 1 + tapCount * 0.07;
+
+            try {
+              Telegram.WebApp.HapticFeedback.impactOccurred("medium");
+            } catch (e) {}
+
+            gsap.to("#star-container", {
+              scale: sc + 0.15,
+              duration: 0.08,
+              onComplete: () =>
+                gsap.to("#star-container", {
+                  scale: sc,
+                  duration: 0.25,
+                  ease: "elastic.out(1,0.3)",
+                }),
+            });
+            gsap.to("#glow", {
+              scale: 1 + progress * 0.9,
+              opacity: 0.5 + progress * 0.5,
+              duration: 0.15,
+            });
+            gsap.to(".ray", {
+              height: 130 + progress * 90,
+              opacity: 0.2 + progress * 0.7,
+              duration: 0.15,
+            });
+
+            document.getElementById("progress-fill").style.width =
+              `${progress * 100}%`;
+            document.getElementById("counter-text").textContent =
+              `${tapCount} / ${MAX_TAPS}`;
+
+            const ft = document.createElement("div");
+            ft.className = "tap-effect";
+            ft.textContent = ["+1", "⭐", "✨", "💫"][~~(Math.random() * 4)];
+            ft.style.left = e.clientX + (Math.random() - 0.5) * 30 + "px";
+            ft.style.top = e.clientY - 15 + "px";
+            document.body.appendChild(ft);
+            setTimeout(() => ft.remove(), 700);
+
+            if (tapCount < MAX_TAPS) addShake(3 + tapCount * 0.7);
+
+            const hue = 45 + progress * 25;
+            document.body.style.background = `radial-gradient(ellipse at 50% 40%,hsl(${hue},80%,98%),hsl(${hue},30%,96%),hsl(${hue},20%,94%))`;
+
+            if (tapCount >= MAX_TAPS) {
+              isFinished = true;
+              startFinale();
+            }
+          });
+
+        // ══════════════════════════════════════
+        //  FINALE
+        // ══════════════════════════════════════
+        async function startFinale() {
+          freezeShake(28, 3000);
+
+          gsap.to("#star-container", {
+            scale: 2.2,
+            filter: "brightness(2.5) drop-shadow(0 0 50px rgba(255,215,0,1))",
+            duration: 2.5,
+            ease: "power1.in",
+          });
+          gsap.to("#glow", { scale: 3, opacity: 1, duration: 2.5 });
+          gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
+
+          await sleep(3000);
+
+          confetti({
+            particleCount: 40,
+            spread: 50,
+            origin: { x: 0.5, y: 0.4 },
+          });
+          destroyAllLotties();
+
+          gsap.to("#flash", { opacity: 1, duration: 1, ease: "power2.in" });
+          await sleep(1000);
+
+          document.getElementById("main-scene").classList.add("hidden");
+          shakeAmt = 0;
+          shakeFrozen = false;
+
+          initRoulette();
+          document.getElementById("roulette-scene").classList.remove("hidden");
+          spinRoulette();
+
+          await sleep(400);
+          gsap.to("#flash", { opacity: 0, duration: 1.2, ease: "power2.out" });
+        }
+
+        function sleep(ms) {
+          return new Promise((r) => setTimeout(r, ms));
+        }
+      } // end startApp
     </script>
   </body>
 </html>
