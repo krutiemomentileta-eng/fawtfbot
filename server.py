@@ -247,8 +247,14 @@ async def api_get_user(req: Request):
             "prize_name": user.get("prize_name"),
         },
         "channels": [
-            {"id": c["channel_id"], "name": c["title"],
-             "link": c["invite_link"], "avatar": c["avatar_base64"]}
+            {
+                "id": c["channel_id"],
+                "name": c["title"],
+                "link": c["invite_link"] if c["invite_link"].startswith("http")
+                        else f"https://t.me/{c['username']}" if c.get("username")
+                        else c["invite_link"],
+                "avatar": c["avatar_base64"],
+            }
             for c in channels
         ],
         "prizes": [
