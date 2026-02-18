@@ -74,7 +74,7 @@
         transition: opacity 0.8s;
       }
 
-      /* MAIN */
+      /* MAIN — GPU layer */
       #main-scene {
         position: relative;
         width: 100%;
@@ -84,6 +84,7 @@
         align-items: center;
         justify-content: center;
         z-index: 2;
+        will-change: transform;
       }
       #star-area {
         position: relative;
@@ -92,9 +93,10 @@
         justify-content: center;
         width: 260px;
         height: 260px;
+        contain: layout style;
       }
 
-      /* 12 RAYS — без filter: blur, чистый CSS */
+      /* RAYS — упрощённые, GPU-ускоренные */
       .ray {
         position: absolute;
         top: 48%;
@@ -109,6 +111,7 @@
           rgba(255, 215, 0, 0)
         );
         border-radius: 2px;
+        will-change: opacity;
         animation: ray-pulse 2s ease-in-out infinite;
         animation-delay: calc(var(--i) * 0.1s);
       }
@@ -116,15 +119,13 @@
         0%,
         100% {
           opacity: 0.2;
-          height: 100px;
         }
         50% {
           opacity: 0.7;
-          height: 160px;
         }
       }
 
-      /* GLOW — без blur! Градиент сам по себе мягкий */
+      /* GLOW — GPU */
       #glow {
         position: absolute;
         width: 200px;
@@ -136,6 +137,7 @@
           rgba(255, 215, 0, 0.15) 40%,
           transparent 70%
         );
+        will-change: transform, opacity;
         animation: glow-breathe 3s ease-in-out infinite;
         pointer-events: none;
       }
@@ -157,6 +159,7 @@
         z-index: 10;
         width: 140px;
         height: 140px;
+        touch-action: manipulation;
       }
       #star-container {
         width: 100%;
@@ -165,6 +168,8 @@
         align-items: center;
         justify-content: center;
         font-size: 90px;
+        will-change: transform;
+        contain: layout style;
       }
       #pulse-ring {
         position: absolute;
@@ -175,6 +180,7 @@
         border: 2px solid rgba(255, 215, 0, 0.25);
         border-radius: 50%;
         transform: translate(-50%, -50%);
+        will-change: transform, opacity;
         animation: pulse-expand 2.5s ease-out infinite;
         pointer-events: none;
       }
@@ -228,21 +234,18 @@
         width: 0%;
         background: linear-gradient(90deg, #ffd700, #ffa500);
         border-radius: 3px;
-      }
-      #counter-text {
-        font-size: 13px;
-        color: #aaa;
-        font-weight: 600;
+        transition: width 0.15s ease-out;
       }
 
-      /* CSS Particles — вместо Canvas! */
+      /* PARTICLES — GPU only */
       .particle {
         position: fixed;
         pointer-events: none;
         z-index: 50;
         border-radius: 50%;
-        background: #ffd700;
-        animation: p-fly 0.8s ease-out forwards;
+        will-change: transform, opacity;
+        animation: p-fly 0.6s ease-out forwards;
+        contain: strict;
       }
       @keyframes p-fly {
         0% {
@@ -262,8 +265,9 @@
         color: #ffd700;
         pointer-events: none;
         z-index: 100;
-        text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-        animation: tap-fly 0.6s ease-out forwards;
+        will-change: transform, opacity;
+        animation: tap-fly 0.5s ease-out forwards;
+        contain: strict;
       }
       @keyframes tap-fly {
         0% {
@@ -272,7 +276,7 @@
         }
         100% {
           opacity: 0;
-          transform: translateY(-60px) scale(1.3);
+          transform: translateY(-50px) scale(1.2);
         }
       }
 
@@ -309,6 +313,7 @@
         background: #fafafa;
         border: 1px solid #eee;
         position: relative;
+        contain: layout style paint;
       }
       #roulette-strip {
         position: absolute;
@@ -316,6 +321,7 @@
         left: 0;
         width: 100%;
         height: 100%;
+        will-change: transform;
       }
       .roulette-item {
         position: absolute;
@@ -329,6 +335,7 @@
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        contain: layout style paint;
       }
       .roulette-sticker {
         width: 72px;
@@ -375,7 +382,7 @@
         pointer-events: none;
       }
 
-      /* MODALS — без backdrop-filter */
+      /* MODALS */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -595,20 +602,13 @@
       </div>
       <div id="tap-text">
         <span class="bounce-letter" style="--d: 0">Ж</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 1">м</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 2">и</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 3">&nbsp;</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 4">ж</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 5">м</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 6">и</span
-        ><!--
-        --><span class="bounce-letter" style="--d: 7">!</span>
+        ><span class="bounce-letter" style="--d: 1">м</span
+        ><span class="bounce-letter" style="--d: 2">и</span
+        ><span class="bounce-letter" style="--d: 3">&nbsp;</span
+        ><span class="bounce-letter" style="--d: 4">ж</span
+        ><span class="bounce-letter" style="--d: 5">м</span
+        ><span class="bounce-letter" style="--d: 6">и</span
+        ><span class="bounce-letter" style="--d: 7">!</span>
       </div>
       <div id="tap-counter">
         <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -714,6 +714,9 @@
           CHANNELS = [],
           USER_STATE = null;
 
+        const PARTICLE_COUNT = 8;
+        const CONFETTI_COUNT = 80;
+
         // ═══ TGS CACHE ═══
         const tgsRaw = {};
         const tgsString = {};
@@ -724,12 +727,11 @@
             const r = await fetch(url);
             if (!r.ok) throw new Error(r.status);
             const buf = await r.arrayBuffer();
-            const json = JSON.parse(
-              pako.inflate(new Uint8Array(buf), { to: "string" }),
-            );
-            tgsRaw[url] = json;
-            tgsString[url] = JSON.stringify(json);
-            return json;
+            const json = pako.inflate(new Uint8Array(buf), { to: "string" });
+            const parsed = JSON.parse(json);
+            tgsRaw[url] = parsed;
+            tgsString[url] = json; // уже строка — не нужен повторный stringify!
+            return parsed;
           } catch (e) {
             tgsRaw[url] = null;
             return null;
@@ -796,7 +798,7 @@
           setTimeout(() => t.classList.remove("show"), ms);
         }
 
-        // ═══ SHAKE ═══
+        // ═══ SHAKE — оптимизированный ═══
         let shakeAmt = 0,
           shakeFrozen = false,
           shakeRaf = null;
@@ -818,30 +820,98 @@
             shakeRaf = null;
             return;
           }
-          mainScene.style.transform = `translate(${((Math.random() - 0.5) * shakeAmt * 2) | 0}px,${((Math.random() - 0.5) * shakeAmt * 2) | 0}px)`;
+          const x = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
+          const y = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
+          mainScene.style.transform = `translate3d(${x}px,${y}px,0)`;
           if (!shakeFrozen) shakeAmt *= 0.85;
           shakeRaf = requestAnimationFrame(tickShake);
         }
 
-        // ═══ CSS PARTICLES (вместо Canvas!) ═══
-        function burstCSS(x, y, n = 10) {
-          for (let i = 0; i < n; i++) {
-            const p = document.createElement("div");
-            p.className = "particle";
-            const angle = ((Math.PI * 2) / n) * i + Math.random() * 0.5;
-            const dist = 30 + Math.random() * 40;
-            p.style.cssText = `
-            left:${x}px;top:${y}px;
-            width:${3 + Math.random() * 4}px;height:${3 + Math.random() * 4}px;
-            --dx:${Math.cos(angle) * dist}px;--dy:${Math.sin(angle) * dist}px;
-            background:${["#FFD700", "#FFA500", "#FF6B6B"][~~(Math.random() * 3)]};
-        `;
-            document.body.appendChild(p);
-            setTimeout(() => p.remove(), 800);
+        // ═══ PARTICLES — переиспользование DOM ═══
+        const particlePool = [];
+        const MAX_PARTICLES = 20;
+
+        // Pre-create particles
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+          const p = document.createElement("div");
+          p.className = "particle";
+          p.style.display = "none";
+          document.body.appendChild(p);
+          particlePool.push({ el: p, busy: false });
+        }
+
+        const PARTICLE_COLORS = ["#FFD700", "#FFA500", "#FF6B6B"];
+
+        function burstCSS(x, y, n) {
+          n = Math.min(n, PARTICLE_COUNT);
+          let used = 0;
+          for (let i = 0; i < particlePool.length && used < n; i++) {
+            const slot = particlePool[i];
+            if (slot.busy) continue;
+            slot.busy = true;
+            used++;
+
+            const angle = ((Math.PI * 2) / n) * used + Math.random() * 0.5;
+            const dist = 25 + Math.random() * 35;
+            const size = 3 + Math.random() * 3;
+            const el = slot.el;
+
+            el.style.cssText = `
+              left:${x}px;top:${y}px;
+              width:${size}px;height:${size}px;
+              --dx:${Math.cos(angle) * dist}px;--dy:${Math.sin(angle) * dist}px;
+              background:${PARTICLE_COLORS[used % 3]};
+              display:block;
+            `;
+            // restart animation
+            el.style.animation = "none";
+            el.offsetHeight; // reflow (minimal — single element)
+            el.style.animation = "";
+
+            setTimeout(() => {
+              el.style.display = "none";
+              slot.busy = false;
+            }, 600);
           }
         }
 
-        // ═══ ROULETTE ═══
+        // ═══ TAP EFFECTS — переиспользование ═══
+        const tapPool = [];
+        const MAX_TAP_EFFECTS = 4;
+        const TAP_TEXTS = ["+1", "⭐", "✨", "💫"];
+
+        for (let i = 0; i < MAX_TAP_EFFECTS; i++) {
+          const el = document.createElement("div");
+          el.className = "tap-effect";
+          el.style.display = "none";
+          document.body.appendChild(el);
+          tapPool.push({ el, busy: false });
+        }
+
+        function showTapEffect(x, y) {
+          for (let i = 0; i < tapPool.length; i++) {
+            const slot = tapPool[i];
+            if (slot.busy) continue;
+            slot.busy = true;
+
+            const el = slot.el;
+            el.textContent = TAP_TEXTS[~~(Math.random() * 4)];
+            el.style.left = x + (Math.random() - 0.5) * 30 + "px";
+            el.style.top = y - 10 + "px";
+            el.style.display = "block";
+            el.style.animation = "none";
+            el.offsetHeight;
+            el.style.animation = "";
+
+            setTimeout(() => {
+              el.style.display = "none";
+              slot.busy = false;
+            }, 500);
+            return;
+          }
+        }
+
+        // ═══ ROULETTE — оптимизированная ═══
         let winnerPrize = null,
           winnerIndex = 0,
           scrollOffset = 0;
@@ -895,13 +965,12 @@
         function updateVisible() {
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
 
-          // Обновляем позиции всегда
-          for (const [idx, s] of liveSlots) {
-            s.el.style.left = 10 + idx * ITEM_STEP - scrollOffset + "px";
-          }
+          // Двигаем strip целиком через transform (GPU!)
+          // вместо двигания каждого элемента отдельно
+          strip.style.transform = `translate3d(${-scrollOffset}px, 0, 0)`;
 
           // Обновляем состав только при значительном скролле
-          if (Math.abs(scrollOffset - lastScroll) < 30) return;
+          if (Math.abs(scrollOffset - lastScroll) < ITEM_STEP * 0.4) return;
           lastScroll = scrollOffset;
 
           const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
@@ -941,7 +1010,8 @@
               sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
             }
 
-            item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
+            // Позиция относительно strip (strip двигается целиком)
+            item.style.left = 10 + i * ITEM_STEP + "px";
             strip.appendChild(item);
             liveSlots.set(i, { el: item, anim });
           }
@@ -986,7 +1056,11 @@
           }
           document.getElementById("roulette-title").textContent =
             "🎉 Поздравляем!";
-          confetti({ particleCount: 80, spread: 80, origin: { y: 0.5 } });
+          confetti({
+            particleCount: CONFETTI_COUNT,
+            spread: 80,
+            origin: { y: 0.5 },
+          });
           api("check-subscription", {
             action: "save_roll",
             prize_key: winnerPrize.key,
@@ -997,12 +1071,14 @@
 
         // ═══ MODALS ═══
         function showPrizeModal() {
+          // Уничтожаем ВСЕ lottie из рулетки
           for (const [, s] of liveSlots)
-            if (s.anim)
+            if (s.anim) {
               try {
                 s.anim.destroy();
                 s.anim = null;
               } catch (e) {}
+            }
           killAllLotties();
 
           const ov = document.getElementById("modal-prize");
@@ -1021,7 +1097,11 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({ particleCount: 60, spread: 60, origin: { y: 0.5 } });
+          confetti({
+            particleCount: 60,
+            spread: 60,
+            origin: { y: 0.5 },
+          });
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
@@ -1059,9 +1139,9 @@
             const li = document.createElement("li");
             li.className = "channel-item";
             li.innerHTML = `
-            <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" loading="lazy">` : "📢"}</div>
-            <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
-            <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>`;
+              <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" loading="lazy">` : "📢"}</div>
+              <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
+              <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>`;
             list.appendChild(li);
           });
 
@@ -1095,7 +1175,6 @@
             const btn = document.getElementById("btn-check-sub");
             btn.disabled = true;
             btn.querySelector("span").textContent = "Проверяем...";
-
             try {
               const res = await api("check-subscription", { action: "check" });
               if (res.all_subscribed) {
@@ -1137,7 +1216,6 @@
             } catch (e) {
               toast("Ошибка, попробуйте позже");
             }
-
             btn.disabled = false;
             btn.querySelector("span").textContent = "Проверить подписку";
           });
@@ -1165,10 +1243,14 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
+          confetti({
+            particleCount: 100,
+            spread: 100,
+            origin: { y: 0.5 },
+          });
         }
 
-        // ═══ 12 RAYS ═══
+        // ═══ RAYS ═══
         const raysBox = document.getElementById("rays-container");
         for (let i = 0; i < 12; i++) {
           const r = document.createElement("div");
@@ -1277,6 +1359,7 @@
 
           if (!USER_STATE || USER_STATE.state === "new") {
             await loadTGS(MAIN_TGS);
+            // На слабых — загружаем TGS только если будем использовать в рулетке
             await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
           } else {
             const prizeUrl = PRIZES.find(
@@ -1335,81 +1418,69 @@
         // ═══ TAP ═══
         let taps = 0,
           finished = false;
+        const starWrapper = document.getElementById("star-wrapper");
+        const starEl = document.getElementById("star-container");
+        const glowEl = document.getElementById("glow");
+        const progressFill = document.getElementById("progress-fill");
+        const counterText = document.getElementById("counter-text");
 
-        document
-          .getElementById("star-wrapper")
-          .addEventListener("pointerdown", (e) => {
-            e.preventDefault();
-            if (finished) return;
-            taps++;
-            const p = taps / MAX_TAPS;
+        starWrapper.addEventListener("pointerdown", (e) => {
+          e.preventDefault();
+          if (finished) return;
+          taps++;
+          const p = taps / MAX_TAPS;
 
-            try {
-              Telegram.WebApp.HapticFeedback.impactOccurred("medium");
-            } catch (e) {}
+          try {
+            Telegram.WebApp.HapticFeedback.impactOccurred("medium");
+          } catch (e) {}
 
-            const sc = 1 + taps * 0.06;
-            const el = document.getElementById("star-container");
-            gsap.to(el, {
-              scale: sc + 0.12,
-              duration: 0.08,
-              onComplete: () =>
-                gsap.to(el, { scale: sc, duration: 0.2, ease: "back.out(2)" }),
-            });
-
-            gsap.to("#glow", {
-              scale: 1 + p * 0.9,
-              opacity: 0.5 + p * 0.5,
-              duration: 0.15,
-            });
-            gsap.to(".ray", {
-              height: 130 + p * 90,
-              opacity: 0.2 + p * 0.7,
-              duration: 0.15,
-              stagger: 0.01,
-            });
-
-            document.getElementById("progress-fill").style.width =
-              `${p * 100}%`;
-            document.getElementById("counter-text").textContent =
-              `${taps} / ${MAX_TAPS}`;
-
-            // Текст
-            if (document.querySelectorAll(".tap-effect").length < 4) {
-              const ft = document.createElement("div");
-              ft.className = "tap-effect";
-              ft.textContent = ["+1", "⭐", "✨", "💫"][~~(Math.random() * 4)];
-              ft.style.left = e.clientX + (Math.random() - 0.5) * 30 + "px";
-              ft.style.top = e.clientY - 10 + "px";
-              document.body.appendChild(ft);
-              setTimeout(() => ft.remove(), 600);
-            }
-
-            // CSS Particles
-            burstCSS(e.clientX, e.clientY, 8);
-
-            if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
-
-            const hue = 45 + p * 25;
-            document.body.style.background = `radial-gradient(ellipse at 50% 40%,hsl(${hue},80%,98%),hsl(${hue},30%,96%),hsl(${hue},20%,94%))`;
-
-            if (taps >= MAX_TAPS) {
-              finished = true;
-              startFinale();
-            }
+          const sc = 1 + taps * 0.06;
+          gsap.to(starEl, {
+            scale: sc + 0.12,
+            duration: 0.08,
+            onComplete: () =>
+              gsap.to(starEl, {
+                scale: sc,
+                duration: 0.2,
+                ease: "back.out(2)",
+              }),
           });
+
+          gsap.to(glowEl, {
+            scale: 1 + p * 0.9,
+            opacity: 0.5 + p * 0.5,
+            duration: 0.15,
+          });
+
+          progressFill.style.width = `${p * 100}%`;
+          counterText.textContent = `${taps} / ${MAX_TAPS}`;
+
+          showTapEffect(e.clientX, e.clientY);
+          burstCSS(e.clientX, e.clientY, PARTICLE_COUNT);
+
+          if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
+
+          if (taps >= MAX_TAPS) {
+            finished = true;
+            startFinale();
+          }
+        });
 
         // ═══ FINALE ═══
         async function startFinale() {
           freezeShake(25, 3000);
 
-          gsap.to("#star-container", {
+          gsap.to(starEl, {
             scale: 2.2,
-            filter: "brightness(2.5) drop-shadow(0 0 40px rgba(255,215,0,0.9))",
             duration: 2.5,
             ease: "power1.in",
           });
-          gsap.to("#glow", { scale: 3, opacity: 1, duration: 2.5 });
+          gsap.to(glowEl, { scale: 3, opacity: 1, duration: 2.5 });
+
+          // Останавливаем CSS-анимации лучей, управляем через GSAP
+          document
+            .querySelectorAll(".ray")
+            .forEach((r) => (r.style.animation = "none"));
           gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
 
           await sleep(3000);
@@ -1440,7 +1511,7 @@
         function sleep(ms) {
           return new Promise((r) => setTimeout(r, ms));
         }
-      } // startApp
+      }
     </script>
   </body>
 </html>
