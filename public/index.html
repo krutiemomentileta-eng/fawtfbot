@@ -71,6 +71,7 @@
         z-index: 999;
         pointer-events: none;
         opacity: 0;
+        transition: opacity 0.8s;
       }
 
       /* MAIN */
@@ -93,7 +94,7 @@
         height: 260px;
       }
 
-      /* RAYS — минимум, 6 вместо 12 */
+      /* 12 RAYS — без filter: blur, чистый CSS */
       .ray {
         position: absolute;
         top: 48%;
@@ -101,31 +102,29 @@
         width: 3px;
         height: 130px;
         transform-origin: bottom center;
-        transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg));
+        transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
         background: linear-gradient(
           to top,
-          rgba(255, 215, 0, 0.4),
+          rgba(255, 215, 0, 0.6),
           rgba(255, 215, 0, 0)
         );
         border-radius: 2px;
-        animation: ray-pulse 2.5s ease-in-out infinite;
-        animation-delay: calc(var(--i) * 0.2s);
+        animation: ray-pulse 2s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.1s);
       }
       @keyframes ray-pulse {
         0%,
         100% {
-          opacity: 0.15;
-          transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg))
-            scaleY(0.8);
+          opacity: 0.2;
+          height: 100px;
         }
         50% {
-          opacity: 0.5;
-          transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg))
-            scaleY(1.2);
+          opacity: 0.7;
+          height: 160px;
         }
       }
 
-      /* GLOW — упрощённый, без blur */
+      /* GLOW — без blur! Градиент сам по себе мягкий */
       #glow {
         position: absolute;
         width: 200px;
@@ -133,7 +132,8 @@
         border-radius: 50%;
         background: radial-gradient(
           circle,
-          rgba(255, 215, 0, 0.2) 0%,
+          rgba(255, 215, 0, 0.35) 0%,
+          rgba(255, 215, 0, 0.15) 40%,
           transparent 70%
         );
         animation: glow-breathe 3s ease-in-out infinite;
@@ -143,11 +143,11 @@
         0%,
         100% {
           transform: scale(1);
-          opacity: 0.5;
+          opacity: 0.6;
         }
         50% {
-          transform: scale(1.2);
-          opacity: 0.8;
+          transform: scale(1.3);
+          opacity: 1;
         }
       }
 
@@ -198,16 +198,16 @@
       }
       .bounce-letter {
         display: inline-block;
-        animation: letter-bounce 2s ease-in-out infinite;
-        animation-delay: calc(var(--d) * 0.1s);
+        animation: letter-bounce 1.5s ease-in-out infinite;
+        animation-delay: calc(var(--d) * 0.08s);
       }
       @keyframes letter-bounce {
         0%,
         100% {
           transform: translateY(0);
         }
-        20% {
-          transform: translateY(-5px);
+        25% {
+          transform: translateY(-6px);
         }
       }
 
@@ -235,13 +235,34 @@
         font-weight: 600;
       }
 
+      /* CSS Particles — вместо Canvas! */
+      .particle {
+        position: fixed;
+        pointer-events: none;
+        z-index: 50;
+        border-radius: 50%;
+        background: #ffd700;
+        animation: p-fly 0.8s ease-out forwards;
+      }
+      @keyframes p-fly {
+        0% {
+          opacity: 1;
+          transform: translate(0, 0) scale(1);
+        }
+        100% {
+          opacity: 0;
+          transform: translate(var(--dx), var(--dy)) scale(0);
+        }
+      }
+
       .tap-effect {
         position: fixed;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: 900;
         color: #ffd700;
         pointer-events: none;
         z-index: 100;
+        text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
         animation: tap-fly 0.6s ease-out forwards;
       }
       @keyframes tap-fly {
@@ -354,14 +375,14 @@
         pointer-events: none;
       }
 
-      /* MODALS */
+      /* MODALS — без backdrop-filter */
       .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.45);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -374,7 +395,7 @@
         text-align: center;
         max-width: 340px;
         width: 90%;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
         max-height: 90vh;
         overflow-y: auto;
       }
@@ -412,7 +433,8 @@
         border-radius: 14px;
         cursor: pointer;
         overflow: hidden;
-        box-shadow: 0 4px 15px rgba(255, 165, 0, 0.4);
+        box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        transition: transform 0.1s;
       }
       .btn-primary:active {
         transform: scale(0.95);
@@ -646,7 +668,6 @@
       </div>
     </div>
 
-    <!-- Скрипты загружаются ПОСЛЕ всего DOM -->
     <script
       defer
       src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
@@ -684,7 +705,7 @@
         const MAIN_TGS = "assets/gift.tgs";
         const MAIN_EMOJI = "🎁";
         const MAX_TAPS = 10;
-        const ROULETTE_TOTAL = 60;
+        const ROULETTE_TOTAL = 70;
         const ITEM_W = 96,
           ITEM_GAP = 10,
           ITEM_STEP = 106;
@@ -693,9 +714,9 @@
           CHANNELS = [],
           USER_STATE = null;
 
-        // ═══ TGS — предпарсенный кеш ═══
-        const tgsRaw = {}; // url → JSON object (оригинал)
-        const tgsClones = {}; // url → JSON string (для быстрого клонирования)
+        // ═══ TGS CACHE ═══
+        const tgsRaw = {};
+        const tgsString = {};
 
         async function loadTGS(url) {
           if (tgsRaw[url] !== undefined) return tgsRaw[url];
@@ -707,7 +728,7 @@
               pako.inflate(new Uint8Array(buf), { to: "string" }),
             );
             tgsRaw[url] = json;
-            tgsClones[url] = JSON.stringify(json); // stringify один раз
+            tgsString[url] = JSON.stringify(json);
             return json;
           } catch (e) {
             tgsRaw[url] = null;
@@ -716,15 +737,12 @@
         }
 
         function cloneTGS(url) {
-          // Быстрее чем JSON.parse(JSON.stringify(obj)) каждый раз
-          const str = tgsClones[url];
-          return str ? JSON.parse(str) : null;
+          return tgsString[url] ? JSON.parse(tgsString[url]) : null;
         }
 
-        // ═══ Lottie — максимум 1 одновременно на мобилке ═══
         let activeLotties = [];
 
-        function playLottieIn(container, url, emoji) {
+        function playLottie(container, url, emoji) {
           container.innerHTML = "";
           const data = cloneTGS(url);
           if (data) {
@@ -745,11 +763,11 @@
         }
 
         function killAllLotties() {
-          for (const a of activeLotties) {
+          activeLotties.forEach((a) => {
             try {
               a.destroy();
             } catch (e) {}
-          }
+          });
           activeLotties = [];
         }
 
@@ -770,7 +788,7 @@
           return r.json();
         }
 
-        function showToast(text, type = "error", ms = 3000) {
+        function toast(text, type = "error", ms = 3000) {
           const t = document.getElementById("toast");
           t.textContent = text;
           t.className = "toast " + type;
@@ -778,14 +796,14 @@
           setTimeout(() => t.classList.remove("show"), ms);
         }
 
-        // ═══ SHAKE — упрощённая ═══
+        // ═══ SHAKE ═══
         let shakeAmt = 0,
           shakeFrozen = false,
           shakeRaf = null;
         const mainScene = document.getElementById("main-scene");
 
         function addShake(a) {
-          shakeAmt = Math.min(shakeAmt + a, 40);
+          shakeAmt = Math.min(shakeAmt + a, 45);
           if (!shakeRaf) tickShake();
         }
         function freezeShake(a, ms) {
@@ -805,19 +823,35 @@
           shakeRaf = requestAnimationFrame(tickShake);
         }
 
-        // ═══ ROULETTE — оптимизированная виртуализация ═══
+        // ═══ CSS PARTICLES (вместо Canvas!) ═══
+        function burstCSS(x, y, n = 10) {
+          for (let i = 0; i < n; i++) {
+            const p = document.createElement("div");
+            p.className = "particle";
+            const angle = ((Math.PI * 2) / n) * i + Math.random() * 0.5;
+            const dist = 30 + Math.random() * 40;
+            p.style.cssText = `
+            left:${x}px;top:${y}px;
+            width:${3 + Math.random() * 4}px;height:${3 + Math.random() * 4}px;
+            --dx:${Math.cos(angle) * dist}px;--dy:${Math.sin(angle) * dist}px;
+            background:${["#FFD700", "#FFA500", "#FF6B6B"][~~(Math.random() * 3)]};
+        `;
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+          }
+        }
+
+        // ═══ ROULETTE ═══
         let winnerPrize = null,
           winnerIndex = 0,
           scrollOffset = 0;
         const liveSlots = new Map();
         const slotPrizes = [];
         const strip = document.getElementById("roulette-strip");
-
-        // Пул DOM-элементов — переиспользуем вместо create/destroy
         const itemPool = [];
 
-        function getPooledItem() {
-          if (itemPool.length > 0) return itemPool.pop();
+        function getPoolItem() {
+          if (itemPool.length) return itemPool.pop();
           const item = document.createElement("div");
           item.className = "roulette-item";
           const sd = document.createElement("div");
@@ -826,35 +860,30 @@
           return item;
         }
 
-        function returnToPool(item, anim) {
+        function returnPool(item, anim) {
           if (anim)
             try {
               anim.destroy();
             } catch (e) {}
           item.firstChild.innerHTML = "";
           item.style.borderColor = "#d0d0d0";
-          item.style.boxShadow = "none";
+          item.style.boxShadow = "";
           item.style.transform = "";
           strip.removeChild(item);
           itemPool.push(item);
         }
 
         function initRoulette() {
-          // Возвращаем всё в пул
-          for (const [idx, slot] of liveSlots) returnToPool(slot.el, slot.anim);
+          for (const [, s] of liveSlots) returnPool(s.el, s.anim);
           liveSlots.clear();
           scrollOffset = 0;
           slotPrizes.length = 0;
           winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
 
           const forcedKey = USER_STATE?.forced_prize;
-          if (forcedKey) {
-            winnerPrize =
-              PRIZES.find((p) => p.key === forcedKey) ||
-              PRIZES[Math.floor(Math.random() * PRIZES.length)];
-          } else {
-            winnerPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-          }
+          winnerPrize =
+            (forcedKey && PRIZES.find((p) => p.key === forcedKey)) ||
+            PRIZES[Math.floor(Math.random() * PRIZES.length)];
 
           for (let i = 0; i < ROULETTE_TOTAL; i++) {
             slotPrizes[i] =
@@ -862,71 +891,59 @@
           }
         }
 
-        // Троттлинг обновления видимых слотов
-        let lastUpdateScroll = -999;
-
+        let lastScroll = -999;
         function updateVisible() {
-          // Обновляем не чаще чем каждые 50px скролла
-          if (Math.abs(scrollOffset - lastUpdateScroll) < 50) {
-            // Но позиции всё равно обновляем
-            for (const [idx, slot] of liveSlots) {
-              slot.el.style.left = 10 + idx * ITEM_STEP - scrollOffset + "px";
-            }
-            return;
-          }
-          lastUpdateScroll = scrollOffset;
-
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
+
+          // Обновляем позиции всегда
+          for (const [idx, s] of liveSlots) {
+            s.el.style.left = 10 + idx * ITEM_STEP - scrollOffset + "px";
+          }
+
+          // Обновляем состав только при значительном скролле
+          if (Math.abs(scrollOffset - lastScroll) < 30) return;
+          lastScroll = scrollOffset;
+
           const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
           const last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
           const vMin = Math.max(0, first),
             vMax = Math.min(ROULETTE_TOTAL - 1, last);
 
-          // Убираем невидимые
-          for (const [idx, slot] of liveSlots) {
+          for (const [idx, s] of liveSlots) {
             if (idx < vMin || idx > vMax) {
-              returnToPool(slot.el, slot.anim);
+              returnPool(s.el, s.anim);
               liveSlots.delete(idx);
             }
           }
 
-          // Добавляем видимые
           for (let i = vMin; i <= vMax; i++) {
-            if (liveSlots.has(i)) {
-              liveSlots.get(i).el.style.left =
-                10 + i * ITEM_STEP - scrollOffset + "px";
-            } else {
-              const prize = slotPrizes[i];
-              const item = getPooledItem();
-              const sd = item.firstChild;
+            if (liveSlots.has(i)) continue;
+            const prize = slotPrizes[i];
+            const item = getPoolItem();
+            const sd = item.firstChild;
+            sd.innerHTML = "";
 
-              // Emoji — самый быстрый вариант для рулетки
-              sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
-
-              let anim = null;
-              // Lottie только для видимых и близких к центру
-              const distFromCenter = Math.abs(
-                i * ITEM_STEP - scrollOffset - vpW / 2,
-              );
-              if (distFromCenter < vpW * 0.8 && tgsRaw[prize.tgs]) {
-                sd.innerHTML = "";
-                try {
-                  anim = lottie.loadAnimation({
-                    container: sd,
-                    renderer: "svg",
-                    loop: true,
-                    autoplay: true,
-                    animationData: cloneTGS(prize.tgs),
-                  });
-                } catch (e) {
-                  sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
-                }
+            let anim = null;
+            const data = cloneTGS(prize.tgs);
+            if (data) {
+              try {
+                anim = lottie.loadAnimation({
+                  container: sd,
+                  renderer: "svg",
+                  loop: true,
+                  autoplay: true,
+                  animationData: data,
+                });
+              } catch (e) {
+                sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
               }
-
-              item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
-              strip.appendChild(item);
-              liveSlots.set(i, { el: item, anim });
+            } else {
+              sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
             }
+
+            item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
+            strip.appendChild(item);
+            liveSlots.set(i, { el: item, anim });
           }
         }
 
@@ -954,16 +971,14 @@
         }
 
         function onStop() {
-          // Финальное точное обновление
-          lastUpdateScroll = -999;
+          lastScroll = -999;
           updateVisible();
-
-          const slot = liveSlots.get(winnerIndex);
-          if (slot) {
-            slot.el.style.borderColor = "#FFD700";
-            slot.el.style.boxShadow = "0 0 20px rgba(255,215,0,0.4)";
-            gsap.to(slot.el, {
-              scale: 1.05,
+          const s = liveSlots.get(winnerIndex);
+          if (s) {
+            s.el.style.borderColor = "#FFD700";
+            s.el.style.boxShadow = "0 0 25px rgba(255,215,0,0.5)";
+            gsap.to(s.el, {
+              scale: 1.08,
               duration: 0.2,
               yoyo: true,
               repeat: 2,
@@ -971,10 +986,10 @@
           }
           document.getElementById("roulette-title").textContent =
             "🎉 Поздравляем!";
-          confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
+          confetti({ particleCount: 80, spread: 80, origin: { y: 0.5 } });
           api("check-subscription", {
             action: "save_roll",
-            prize_key: winnerPrize.key || winnerPrize.tgs,
+            prize_key: winnerPrize.key,
             prize_name: winnerPrize.name,
           }).catch(() => {});
           setTimeout(showPrizeModal, 1000);
@@ -982,21 +997,18 @@
 
         // ═══ MODALS ═══
         function showPrizeModal() {
-          // Убиваем ВСЕ lottie рулетки
-          for (const [, slot] of liveSlots) {
-            if (slot.anim) {
+          for (const [, s] of liveSlots)
+            if (s.anim)
               try {
-                slot.anim.destroy();
+                s.anim.destroy();
+                s.anim = null;
               } catch (e) {}
-              slot.anim = null;
-            }
-          }
           killAllLotties();
 
           const ov = document.getElementById("modal-prize");
           document.getElementById("modal-prize-name").textContent =
             winnerPrize.name;
-          playLottieIn(
+          playLottie(
             document.getElementById("modal-prize-sticker"),
             winnerPrize.tgs,
             winnerPrize.emoji,
@@ -1009,7 +1021,7 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({ particleCount: 50, spread: 50, origin: { y: 0.5 } });
+          confetti({ particleCount: 60, spread: 60, origin: { y: 0.5 } });
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
@@ -1032,7 +1044,6 @@
             ? winnerPrize.name
             : USER_STATE?.prize_name || "Приз";
           document.getElementById("sub-prize-name").textContent = pName;
-
           const tUrl = winnerPrize
             ? winnerPrize.tgs
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
@@ -1040,7 +1051,7 @@
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
           if (tUrl)
-            playLottieIn(document.getElementById("sub-sticker"), tUrl, em);
+            playLottie(document.getElementById("sub-sticker"), tUrl, em);
 
           const list = document.getElementById("channel-list");
           list.innerHTML = "";
@@ -1054,7 +1065,6 @@
             list.appendChild(li);
           });
 
-          // Обработчики
           list.querySelectorAll(".channel-sub-btn").forEach((btn) => {
             btn.addEventListener("click", (e) => {
               e.stopPropagation();
@@ -1093,7 +1103,7 @@
                   b.textContent = "✓";
                   b.classList.add("done");
                 });
-                showToast("Подписки подтверждены!", "success");
+                toast("Подписки подтверждены!", "success");
                 await sleep(800);
                 const ov = document.getElementById("modal-subscribe");
                 gsap.to(ov.querySelector(".modal-box"), {
@@ -1119,13 +1129,13 @@
                     }
                   }
                 });
-                showToast("Подпишитесь на все каналы!");
+                toast("Подпишитесь на все каналы!");
                 try {
                   Telegram.WebApp.HapticFeedback.notificationOccurred("error");
                 } catch (e) {}
               }
             } catch (e) {
-              showToast("Ошибка, попробуйте позже");
+              toast("Ошибка, попробуйте позже");
             }
 
             btn.disabled = false;
@@ -1146,7 +1156,7 @@
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
           if (tUrl)
-            playLottieIn(document.getElementById("final-sticker"), tUrl, em);
+            playLottie(document.getElementById("final-sticker"), tUrl, em);
           ov.classList.remove("hidden");
           gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
@@ -1155,12 +1165,12 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
+          confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
         }
 
-        // ═══ RAYS — 6 вместо 12 ═══
+        // ═══ 12 RAYS ═══
         const raysBox = document.getElementById("rays-container");
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 12; i++) {
           const r = document.createElement("div");
           r.className = "ray";
           r.style.setProperty("--i", i);
@@ -1265,10 +1275,8 @@
             ];
           }
 
-          // Грузим только нужные TGS
           if (!USER_STATE || USER_STATE.state === "new") {
             await loadTGS(MAIN_TGS);
-            // Призы грузим параллельно
             await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
           } else {
             const prizeUrl = PRIZES.find(
@@ -1277,17 +1285,14 @@
             if (prizeUrl) await loadTGS(prizeUrl);
           }
 
-          // Убираем лоадер
           const ls = document.getElementById("loading-screen");
           ls.style.opacity = "0";
-          ls.style.transition = "opacity 0.3s";
           setTimeout(() => ls.classList.add("hidden"), 300);
 
           try {
             Telegram.WebApp.ready();
           } catch (e) {}
 
-          // Роутинг
           if (USER_STATE?.state === "claimed") {
             showFinalModal();
             return;
@@ -1299,15 +1304,13 @@
             return;
           }
 
-          // new
           document.getElementById("main-scene").classList.remove("hidden");
-          playLottieIn(
+          playLottie(
             document.getElementById("star-container"),
             MAIN_TGS,
             MAIN_EMOJI,
           );
 
-          // Анимация входа — одна простая
           gsap.from("#star-area", {
             scale: 0,
             duration: 0.8,
@@ -1345,30 +1348,50 @@
               Telegram.WebApp.HapticFeedback.impactOccurred("medium");
             } catch (e) {}
 
-            // Простой scale — без elastic (дешевле)
             const sc = 1 + taps * 0.06;
             const el = document.getElementById("star-container");
-            el.style.transform = `scale(${sc + 0.1})`;
-            setTimeout(() => (el.style.transform = `scale(${sc})`), 80);
+            gsap.to(el, {
+              scale: sc + 0.12,
+              duration: 0.08,
+              onComplete: () =>
+                gsap.to(el, { scale: sc, duration: 0.2, ease: "back.out(2)" }),
+            });
 
-            // Прогресс
+            gsap.to("#glow", {
+              scale: 1 + p * 0.9,
+              opacity: 0.5 + p * 0.5,
+              duration: 0.15,
+            });
+            gsap.to(".ray", {
+              height: 130 + p * 90,
+              opacity: 0.2 + p * 0.7,
+              duration: 0.15,
+              stagger: 0.01,
+            });
+
             document.getElementById("progress-fill").style.width =
               `${p * 100}%`;
             document.getElementById("counter-text").textContent =
               `${taps} / ${MAX_TAPS}`;
 
-            // Летающий текст — максимум 3 одновременно
-            if (document.querySelectorAll(".tap-effect").length < 3) {
+            // Текст
+            if (document.querySelectorAll(".tap-effect").length < 4) {
               const ft = document.createElement("div");
               ft.className = "tap-effect";
-              ft.textContent = ["+1", "⭐", "✨"][~~(Math.random() * 3)];
-              ft.style.left = e.clientX + (Math.random() - 0.5) * 20 + "px";
+              ft.textContent = ["+1", "⭐", "✨", "💫"][~~(Math.random() * 4)];
+              ft.style.left = e.clientX + (Math.random() - 0.5) * 30 + "px";
               ft.style.top = e.clientY - 10 + "px";
               document.body.appendChild(ft);
               setTimeout(() => ft.remove(), 600);
             }
 
+            // CSS Particles
+            burstCSS(e.clientX, e.clientY, 8);
+
             if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
+
+            const hue = 45 + p * 25;
+            document.body.style.background = `radial-gradient(ellipse at 50% 40%,hsl(${hue},80%,98%),hsl(${hue},30%,96%),hsl(${hue},20%,94%))`;
 
             if (taps >= MAX_TAPS) {
               finished = true;
@@ -1378,29 +1401,29 @@
 
         // ═══ FINALE ═══
         async function startFinale() {
-          freezeShake(25, 2500);
+          freezeShake(25, 3000);
 
-          const el = document.getElementById("star-container");
-          el.style.transition = "transform 2s, filter 2s";
-          el.style.transform = "scale(2)";
-          el.style.filter =
-            "brightness(2) drop-shadow(0 0 30px rgba(255,215,0,0.8))";
+          gsap.to("#star-container", {
+            scale: 2.2,
+            filter: "brightness(2.5) drop-shadow(0 0 40px rgba(255,215,0,0.9))",
+            duration: 2.5,
+            ease: "power1.in",
+          });
+          gsap.to("#glow", { scale: 3, opacity: 1, duration: 2.5 });
+          gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
 
-          await sleep(2500);
+          await sleep(3000);
 
           confetti({
-            particleCount: 30,
-            spread: 40,
+            particleCount: 40,
+            spread: 50,
             origin: { x: 0.5, y: 0.4 },
           });
           killAllLotties();
-          el.style.transition = "";
 
-          // Fade to white
           const flash = document.getElementById("flash");
-          flash.style.transition = "opacity 0.8s";
           flash.style.opacity = "1";
-          await sleep(800);
+          await sleep(1000);
 
           document.getElementById("main-scene").classList.add("hidden");
           shakeAmt = 0;
@@ -1411,7 +1434,6 @@
           spinRoulette();
 
           await sleep(300);
-          flash.style.transition = "opacity 1s";
           flash.style.opacity = "0";
         }
 
