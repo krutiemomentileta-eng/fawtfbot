@@ -7,35 +7,13 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     <title>⭐ Tap & Win!</title>
-
-    <!-- Критичные скрипты — defer -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script
-      defer
-      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
-    ></script>
-    <script
-      defer
-      src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"
-    ></script>
-    <script
-      defer
-      src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"
-    ></script>
-
-    <!-- lottie-web LIGHT build — в 2 раза легче -->
-    <script
-      defer
-      src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie_light.min.js"
-    ></script>
-
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
-
       body {
         width: 100vw;
         height: 100vh;
@@ -45,12 +23,11 @@
         -webkit-tap-highlight-color: transparent;
         user-select: none;
       }
-
       .hidden {
         display: none !important;
       }
 
-      /* ===== LOADING ===== */
+      /* LOADING */
       #loading-screen {
         position: fixed;
         top: 0;
@@ -64,7 +41,6 @@
         justify-content: center;
         z-index: 9999;
       }
-
       .loading-spinner {
         width: 36px;
         height: 36px;
@@ -73,20 +49,18 @@
         border-radius: 50%;
         animation: spin 0.7s linear infinite;
       }
-
       @keyframes spin {
         to {
           transform: rotate(360deg);
         }
       }
-
       .loading-text {
         color: #bbb;
         font-size: 13px;
         margin-top: 14px;
       }
 
-      /* ===== FLASH ===== */
+      /* FLASH */
       #flash {
         position: fixed;
         top: 0;
@@ -99,7 +73,7 @@
         opacity: 0;
       }
 
-      /* ===== MAIN SCENE ===== */
+      /* MAIN */
       #main-scene {
         position: relative;
         width: 100%;
@@ -110,7 +84,6 @@
         justify-content: center;
         z-index: 2;
       }
-
       #star-area {
         position: relative;
         display: flex;
@@ -120,16 +93,7 @@
         height: 260px;
       }
 
-      /* Лучи — чистый CSS, без canvas */
-      #rays-container {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        pointer-events: none;
-      }
-
+      /* RAYS — минимум, 6 вместо 12 */
       .ray {
         position: absolute;
         top: 48%;
@@ -137,30 +101,31 @@
         width: 3px;
         height: 130px;
         transform-origin: bottom center;
-        transform: translate(-50%, -100%) rotate(calc(var(--i) * 30deg));
+        transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg));
         background: linear-gradient(
           to top,
-          rgba(255, 215, 0, 0.5),
+          rgba(255, 215, 0, 0.4),
           rgba(255, 215, 0, 0)
         );
         border-radius: 2px;
-        animation: ray-pulse 2s ease-in-out infinite;
-        animation-delay: calc(var(--i) * 0.12s);
-        will-change: opacity, height;
+        animation: ray-pulse 2.5s ease-in-out infinite;
+        animation-delay: calc(var(--i) * 0.2s);
       }
-
       @keyframes ray-pulse {
         0%,
         100% {
-          opacity: 0.2;
-          height: 100px;
+          opacity: 0.15;
+          transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg))
+            scaleY(0.8);
         }
         50% {
-          opacity: 0.7;
-          height: 160px;
+          opacity: 0.5;
+          transform: translate(-50%, -100%) rotate(calc(var(--i) * 60deg))
+            scaleY(1.2);
         }
       }
 
+      /* GLOW — упрощённый, без blur */
       #glow {
         position: absolute;
         width: 200px;
@@ -168,24 +133,21 @@
         border-radius: 50%;
         background: radial-gradient(
           circle,
-          rgba(255, 215, 0, 0.25) 0%,
+          rgba(255, 215, 0, 0.2) 0%,
           transparent 70%
         );
-        filter: blur(15px);
         animation: glow-breathe 3s ease-in-out infinite;
         pointer-events: none;
-        will-change: transform, opacity;
       }
-
       @keyframes glow-breathe {
         0%,
         100% {
           transform: scale(1);
-          opacity: 0.6;
+          opacity: 0.5;
         }
         50% {
-          transform: scale(1.3);
-          opacity: 1;
+          transform: scale(1.2);
+          opacity: 0.8;
         }
       }
 
@@ -196,7 +158,6 @@
         width: 140px;
         height: 140px;
       }
-
       #star-container {
         width: 100%;
         height: 100%;
@@ -204,42 +165,26 @@
         align-items: center;
         justify-content: center;
         font-size: 90px;
-        animation: star-float 3s ease-in-out infinite;
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.4));
-        will-change: transform;
       }
-
-      @keyframes star-float {
-        0%,
-        100% {
-          transform: translateY(0);
-        }
-        50% {
-          transform: translateY(-8px);
-        }
-      }
-
       #pulse-ring {
         position: absolute;
         top: 50%;
         left: 50%;
         width: 150px;
         height: 150px;
-        border: 2px solid rgba(255, 215, 0, 0.3);
+        border: 2px solid rgba(255, 215, 0, 0.25);
         border-radius: 50%;
         transform: translate(-50%, -50%);
-        animation: pulse-expand 2s ease-out infinite;
+        animation: pulse-expand 2.5s ease-out infinite;
         pointer-events: none;
-        will-change: transform, opacity;
       }
-
       @keyframes pulse-expand {
         0% {
           transform: translate(-50%, -50%) scale(0.8);
-          opacity: 1;
+          opacity: 0.8;
         }
         100% {
-          transform: translate(-50%, -50%) scale(2.2);
+          transform: translate(-50%, -50%) scale(2);
           opacity: 0;
         }
       }
@@ -251,20 +196,18 @@
         color: #333;
         letter-spacing: 2px;
       }
-
       .bounce-letter {
         display: inline-block;
-        animation: letter-bounce 1.5s ease-in-out infinite;
-        animation-delay: calc(var(--d) * 0.08s);
+        animation: letter-bounce 2s ease-in-out infinite;
+        animation-delay: calc(var(--d) * 0.1s);
       }
-
       @keyframes letter-bounce {
         0%,
         100% {
           transform: translateY(0);
         }
-        25% {
-          transform: translateY(-6px);
+        20% {
+          transform: translateY(-5px);
         }
       }
 
@@ -272,7 +215,6 @@
         margin-top: 16px;
         text-align: center;
       }
-
       #progress-bar {
         width: 180px;
         height: 6px;
@@ -281,15 +223,12 @@
         overflow: hidden;
         margin: 0 auto 6px;
       }
-
       #progress-fill {
         height: 100%;
         width: 0%;
         background: linear-gradient(90deg, #ffd700, #ffa500);
         border-radius: 3px;
-        transition: none;
       }
-
       #counter-text {
         font-size: 13px;
         color: #aaa;
@@ -298,15 +237,13 @@
 
       .tap-effect {
         position: fixed;
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 900;
         color: #ffd700;
         pointer-events: none;
         z-index: 100;
-        text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-        animation: tap-fly 0.7s ease-out forwards;
+        animation: tap-fly 0.6s ease-out forwards;
       }
-
       @keyframes tap-fly {
         0% {
           opacity: 1;
@@ -314,11 +251,11 @@
         }
         100% {
           opacity: 0;
-          transform: translateY(-70px) scale(1.4);
+          transform: translateY(-60px) scale(1.3);
         }
       }
 
-      /* ===== ROULETTE ===== */
+      /* ROULETTE */
       #roulette-scene {
         position: fixed;
         top: 0;
@@ -330,22 +267,19 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: radial-gradient(ellipse at center, #fff 0%, #f5f5f5 100%);
+        background: #fff;
       }
-
       #roulette-title {
         font-size: 22px;
         font-weight: 700;
         color: #333;
         margin-bottom: 30px;
       }
-
       #roulette-wrapper {
         position: relative;
         width: 92%;
         max-width: 450px;
       }
-
       #roulette-viewport {
         width: 100%;
         height: 120px;
@@ -355,7 +289,6 @@
         border: 1px solid #eee;
         position: relative;
       }
-
       #roulette-strip {
         position: absolute;
         top: 0;
@@ -363,7 +296,6 @@
         width: 100%;
         height: 100%;
       }
-
       .roulette-item {
         position: absolute;
         top: 10px;
@@ -377,7 +309,6 @@
         justify-content: center;
         overflow: hidden;
       }
-
       .roulette-sticker {
         width: 72px;
         height: 72px;
@@ -391,7 +322,6 @@
         width: 72px;
         height: 72px;
       }
-
       #roulette-pointer-top {
         position: absolute;
         top: -14px;
@@ -401,9 +331,7 @@
         border-right: 11px solid transparent;
         border-top: 14px solid #ffd700;
         z-index: 10;
-        filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.5));
       }
-
       #roulette-pointer-bottom {
         position: absolute;
         bottom: -14px;
@@ -414,36 +342,31 @@
         border-bottom: 14px solid #ffd700;
         z-index: 10;
       }
-
       #roulette-line {
         position: absolute;
         top: 0;
         bottom: 0;
         left: 50%;
-        width: 2.5px;
-        background: rgba(255, 215, 0, 0.6);
+        width: 2px;
+        background: rgba(255, 215, 0, 0.5);
         transform: translateX(-50%);
         z-index: 10;
-        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
         pointer-events: none;
       }
 
-      /* ===== MODALS ===== */
+      /* MODALS */
       .modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.55);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 200;
       }
-
       .modal-box {
         background: white;
         border-radius: 24px;
@@ -455,7 +378,6 @@
         max-height: 90vh;
         overflow-y: auto;
       }
-
       .modal-box h2 {
         font-size: 20px;
         color: #888;
@@ -463,7 +385,6 @@
         font-weight: 600;
         letter-spacing: 1px;
       }
-
       .modal-sticker {
         width: 120px;
         height: 120px;
@@ -473,14 +394,12 @@
         justify-content: center;
         font-size: 65px;
       }
-
       .modal-prize-name {
         font-size: 20px;
         font-weight: 800;
         color: #333;
         margin-bottom: 20px;
       }
-
       .btn-primary {
         position: relative;
         width: 100%;
@@ -488,16 +407,13 @@
         font-size: 16px;
         font-weight: 700;
         color: white;
-        background: linear-gradient(135deg, #ffd700, #ffa500, #ff6b6b);
-        background-size: 200% 200%;
+        background: linear-gradient(135deg, #ffd700, #ffa500);
         border: none;
         border-radius: 14px;
         cursor: pointer;
         overflow: hidden;
-        animation: gradient-shift 3s ease infinite;
         box-shadow: 0 4px 15px rgba(255, 165, 0, 0.4);
       }
-
       .btn-primary:active {
         transform: scale(0.95);
       }
@@ -505,17 +421,6 @@
         opacity: 0.6;
         pointer-events: none;
       }
-
-      @keyframes gradient-shift {
-        0%,
-        100% {
-          background-position: 0% 50%;
-        }
-        50% {
-          background-position: 100% 50%;
-        }
-      }
-
       .btn-shine {
         position: absolute;
         top: 0;
@@ -525,12 +430,11 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(255, 255, 255, 0.35),
+          rgba(255, 255, 255, 0.3),
           transparent
         );
-        animation: shine-move 2s ease-in-out infinite;
+        animation: shine-move 2.5s ease-in-out infinite;
       }
-
       @keyframes shine-move {
         0% {
           left: -100%;
@@ -541,30 +445,25 @@
         }
       }
 
-      /* Subscribe */
       .subscribe-desc {
         font-size: 14px;
         color: #666;
         margin-bottom: 18px;
         line-height: 1.5;
       }
-
       .channel-list {
         list-style: none;
         margin-bottom: 20px;
       }
-
       .channel-item {
         display: flex;
         align-items: center;
         padding: 10px 0;
         border-bottom: 1px solid #f0f0f0;
       }
-
       .channel-item:last-child {
         border-bottom: none;
       }
-
       .channel-avatar {
         width: 42px;
         height: 42px;
@@ -572,27 +471,24 @@
         background: #e0e0e0;
         margin-right: 12px;
         flex-shrink: 0;
+        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 20px;
         color: #999;
-        overflow: hidden;
       }
-
       .channel-avatar img {
         width: 100%;
         height: 100%;
         border-radius: 50%;
         object-fit: cover;
       }
-
       .channel-info {
         flex: 1;
         text-align: left;
         min-width: 0;
       }
-
       .channel-name {
         font-size: 14px;
         font-weight: 600;
@@ -601,7 +497,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-
       .channel-sub-btn {
         padding: 8px 14px;
         font-size: 13px;
@@ -613,16 +508,10 @@
         cursor: pointer;
         flex-shrink: 0;
         margin-left: 10px;
-        text-decoration: none;
-        display: inline-block;
       }
-
       .channel-sub-btn.done {
         background: #4caf50;
         pointer-events: none;
-      }
-      .channel-sub-btn:active {
-        opacity: 0.8;
       }
 
       .toast {
@@ -637,17 +526,14 @@
         font-size: 14px;
         font-weight: 600;
         z-index: 9999;
-        box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
         transition: transform 0.3s ease;
         pointer-events: none;
       }
-
       .toast.show {
         transform: translateX(-50%) translateY(0);
       }
       .toast.success {
         background: #4caf50;
-        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
       }
 
       .final-icon {
@@ -672,11 +558,10 @@
       <div class="loading-spinner"></div>
       <p class="loading-text">Загрузка...</p>
     </div>
-
     <div id="flash"></div>
     <div id="toast" class="toast"></div>
 
-    <!-- SCENE 1: TAP -->
+    <!-- TAP -->
     <div id="main-scene" class="hidden">
       <div id="star-area">
         <div id="rays-container"></div>
@@ -709,7 +594,7 @@
       </div>
     </div>
 
-    <!-- SCENE 2: ROULETTE -->
+    <!-- ROULETTE -->
     <div id="roulette-scene" class="hidden">
       <div id="roulette-title">🎰 Крутим рулетку...</div>
       <div id="roulette-wrapper">
@@ -722,7 +607,7 @@
       </div>
     </div>
 
-    <!-- MODAL: Prize -->
+    <!-- MODALS -->
     <div id="modal-prize" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>ВАМ ВЫПАЛ:</h2>
@@ -734,7 +619,6 @@
       </div>
     </div>
 
-    <!-- MODAL: Subscribe -->
     <div id="modal-subscribe" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>🎁 Получите приз!</h2>
@@ -750,7 +634,6 @@
       </div>
     </div>
 
-    <!-- MODAL: Final -->
     <div id="modal-final" class="modal-overlay hidden">
       <div class="modal-box">
         <div class="final-icon">✅</div>
@@ -763,75 +646,95 @@
       </div>
     </div>
 
+    <!-- Скрипты загружаются ПОСЛЕ всего DOM -->
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"
+    ></script>
+    <script
+      defer
+      src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"
+    ></script>
+
     <script>
-      // Ждём загрузку всех defer-скриптов
-      window.addEventListener("DOMContentLoaded", () => {
-        // Проверяем что всё загрузилось
-        const waitForLibs = setInterval(() => {
+      window.addEventListener("load", () => {
+        const check = setInterval(() => {
           if (
             typeof gsap !== "undefined" &&
             typeof confetti !== "undefined" &&
             typeof lottie !== "undefined" &&
             typeof pako !== "undefined"
           ) {
-            clearInterval(waitForLibs);
+            clearInterval(check);
             startApp();
           }
-        }, 50);
+        }, 30);
       });
 
       function startApp() {
-        // ══════════════════════════════════════
-        //  CONFIG
-        // ══════════════════════════════════════
         const API_BASE = "/api";
-        const MAIN_STICKER_TGS = "assets/gift.tgs";
-        const MAIN_STICKER_EMOJI = "🎁";
+        const MAIN_TGS = "assets/gift.tgs";
+        const MAIN_EMOJI = "🎁";
         const MAX_TAPS = 10;
-        const ROULETTE_TOTAL = 80;
-        const ITEM_W = 96;
-        const ITEM_GAP = 10;
-        const ITEM_STEP = ITEM_W + ITEM_GAP;
+        const ROULETTE_TOTAL = 60;
+        const ITEM_W = 96,
+          ITEM_GAP = 10,
+          ITEM_STEP = 106;
 
-        let PRIZES = [];
-        let CHANNELS = [];
-        let USER_STATE = null;
+        let PRIZES = [],
+          CHANNELS = [],
+          USER_STATE = null;
 
-        // ══════════════════════════════════════
-        //  TGS — оптимизированный загрузчик
-        // ══════════════════════════════════════
-        const tgsCache = {};
+        // ═══ TGS — предпарсенный кеш ═══
+        const tgsRaw = {}; // url → JSON object (оригинал)
+        const tgsClones = {}; // url → JSON string (для быстрого клонирования)
 
         async function loadTGS(url) {
-          if (tgsCache[url] !== undefined) return tgsCache[url];
+          if (tgsRaw[url] !== undefined) return tgsRaw[url];
           try {
             const r = await fetch(url);
             if (!r.ok) throw new Error(r.status);
             const buf = await r.arrayBuffer();
-            tgsCache[url] = JSON.parse(
+            const json = JSON.parse(
               pako.inflate(new Uint8Array(buf), { to: "string" }),
             );
-            return tgsCache[url];
+            tgsRaw[url] = json;
+            tgsClones[url] = JSON.stringify(json); // stringify один раз
+            return json;
           } catch (e) {
-            tgsCache[url] = null;
+            tgsRaw[url] = null;
             return null;
           }
         }
 
-        // Только 1 активный lottie одновременно на мобилке!
+        function cloneTGS(url) {
+          // Быстрее чем JSON.parse(JSON.stringify(obj)) каждый раз
+          const str = tgsClones[url];
+          return str ? JSON.parse(str) : null;
+        }
+
+        // ═══ Lottie — максимум 1 одновременно на мобилке ═══
         let activeLotties = [];
 
-        function playLottieIn(container, tgsUrl, emoji) {
+        function playLottieIn(container, url, emoji) {
           container.innerHTML = "";
-          const data = tgsCache[tgsUrl];
+          const data = cloneTGS(url);
           if (data) {
             try {
               const anim = lottie.loadAnimation({
                 container,
-                renderer: "svg", // ← тут
+                renderer: "svg",
                 loop: true,
                 autoplay: true,
-                animationData: JSON.parse(JSON.stringify(data)),
+                animationData: data,
               });
               activeLotties.push(anim);
               return anim;
@@ -841,18 +744,16 @@
           return null;
         }
 
-        function destroyAllLotties() {
-          activeLotties.forEach((a) => {
+        function killAllLotties() {
+          for (const a of activeLotties) {
             try {
               a.destroy();
             } catch (e) {}
-          });
+          }
           activeLotties = [];
         }
 
-        // ══════════════════════════════════════
-        //  API
-        // ══════════════════════════════════════
+        // ═══ API ═══
         function getInitData() {
           try {
             return Telegram.WebApp.initData;
@@ -860,19 +761,15 @@
             return "";
           }
         }
-
-        async function apiCall(endpoint, body = {}) {
-          const res = await fetch(`${API_BASE}/${endpoint}`, {
+        async function api(ep, body = {}) {
+          const r = await fetch(`${API_BASE}/${ep}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ initData: getInitData(), ...body }),
           });
-          return res.json();
+          return r.json();
         }
 
-        // ══════════════════════════════════════
-        //  TOAST
-        // ══════════════════════════════════════
         function showToast(text, type = "error", ms = 3000) {
           const t = document.getElementById("toast");
           t.textContent = text;
@@ -881,42 +778,34 @@
           setTimeout(() => t.classList.remove("show"), ms);
         }
 
-        // ══════════════════════════════════════
-        //  SHAKE — без rAF спама, CSS transforms
-        // ══════════════════════════════════════
+        // ═══ SHAKE — упрощённая ═══
         let shakeAmt = 0,
           shakeFrozen = false,
           shakeRaf = null;
-        const shakeEl = document.getElementById("main-scene");
+        const mainScene = document.getElementById("main-scene");
 
         function addShake(a) {
-          shakeAmt = Math.min(shakeAmt + a, 50);
-          if (!shakeRaf) runShake();
+          shakeAmt = Math.min(shakeAmt + a, 40);
+          if (!shakeRaf) tickShake();
         }
-
         function freezeShake(a, ms) {
           shakeAmt = a;
           shakeFrozen = true;
-          if (!shakeRaf) runShake();
-          setTimeout(() => {
-            shakeFrozen = false;
-          }, ms);
+          if (!shakeRaf) tickShake();
+          setTimeout(() => (shakeFrozen = false), ms);
         }
-
-        function runShake() {
-          if (shakeAmt < 0.3 && !shakeFrozen) {
-            shakeEl.style.transform = "";
+        function tickShake() {
+          if (shakeAmt < 0.5 && !shakeFrozen) {
+            mainScene.style.transform = "";
             shakeRaf = null;
             return;
           }
-          shakeEl.style.transform = `translate(${(Math.random() - 0.5) * shakeAmt * 2}px,${(Math.random() - 0.5) * shakeAmt * 2}px)`;
-          if (!shakeFrozen) shakeAmt *= 0.88;
-          shakeRaf = requestAnimationFrame(runShake);
+          mainScene.style.transform = `translate(${((Math.random() - 0.5) * shakeAmt * 2) | 0}px,${((Math.random() - 0.5) * shakeAmt * 2) | 0}px)`;
+          if (!shakeFrozen) shakeAmt *= 0.85;
+          shakeRaf = requestAnimationFrame(tickShake);
         }
 
-        // ══════════════════════════════════════
-        //  ROULETTE — виртуализированная
-        // ══════════════════════════════════════
+        // ═══ ROULETTE — оптимизированная виртуализация ═══
         let winnerPrize = null,
           winnerIndex = 0,
           scrollOffset = 0;
@@ -924,65 +813,116 @@
         const slotPrizes = [];
         const strip = document.getElementById("roulette-strip");
 
+        // Пул DOM-элементов — переиспользуем вместо create/destroy
+        const itemPool = [];
+
+        function getPooledItem() {
+          if (itemPool.length > 0) return itemPool.pop();
+          const item = document.createElement("div");
+          item.className = "roulette-item";
+          const sd = document.createElement("div");
+          sd.className = "roulette-sticker";
+          item.appendChild(sd);
+          return item;
+        }
+
+        function returnToPool(item, anim) {
+          if (anim)
+            try {
+              anim.destroy();
+            } catch (e) {}
+          item.firstChild.innerHTML = "";
+          item.style.borderColor = "#d0d0d0";
+          item.style.boxShadow = "none";
+          item.style.transform = "";
+          strip.removeChild(item);
+          itemPool.push(item);
+        }
+
         function initRoulette() {
-          strip.innerHTML = "";
+          // Возвращаем всё в пул
+          for (const [idx, slot] of liveSlots) returnToPool(slot.el, slot.anim);
           liveSlots.clear();
           scrollOffset = 0;
           slotPrizes.length = 0;
           winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
-          winnerPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+
+          const forcedKey = USER_STATE?.forced_prize;
+          if (forcedKey) {
+            winnerPrize =
+              PRIZES.find((p) => p.key === forcedKey) ||
+              PRIZES[Math.floor(Math.random() * PRIZES.length)];
+          } else {
+            winnerPrize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
+          }
+
           for (let i = 0; i < ROULETTE_TOTAL; i++) {
             slotPrizes[i] =
               i === winnerIndex ? winnerPrize : PRIZES[i % PRIZES.length];
           }
         }
 
-        function updateVisibleSlots() {
+        // Троттлинг обновления видимых слотов
+        let lastUpdateScroll = -999;
+
+        function updateVisible() {
+          // Обновляем не чаще чем каждые 50px скролла
+          if (Math.abs(scrollOffset - lastUpdateScroll) < 50) {
+            // Но позиции всё равно обновляем
+            for (const [idx, slot] of liveSlots) {
+              slot.el.style.left = 10 + idx * ITEM_STEP - scrollOffset + "px";
+            }
+            return;
+          }
+          lastUpdateScroll = scrollOffset;
+
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
           const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
           const last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
           const vMin = Math.max(0, first),
             vMax = Math.min(ROULETTE_TOTAL - 1, last);
 
+          // Убираем невидимые
           for (const [idx, slot] of liveSlots) {
             if (idx < vMin || idx > vMax) {
-              if (slot.anim)
-                try {
-                  slot.anim.destroy();
-                } catch (e) {}
-              slot.el.remove();
+              returnToPool(slot.el, slot.anim);
               liveSlots.delete(idx);
             }
           }
 
+          // Добавляем видимые
           for (let i = vMin; i <= vMax; i++) {
             if (liveSlots.has(i)) {
               liveSlots.get(i).el.style.left =
                 10 + i * ITEM_STEP - scrollOffset + "px";
             } else {
               const prize = slotPrizes[i];
-              const item = document.createElement("div");
-              item.className = "roulette-item";
-              const sd = document.createElement("div");
-              sd.className = "roulette-sticker";
+              const item = getPooledItem();
+              const sd = item.firstChild;
+
+              // Emoji — самый быстрый вариант для рулетки
+              sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
+
               let anim = null;
-              const data = tgsCache[prize.tgs];
-              if (data) {
+              // Lottie только для видимых и близких к центру
+              const distFromCenter = Math.abs(
+                i * ITEM_STEP - scrollOffset - vpW / 2,
+              );
+              if (distFromCenter < vpW * 0.8 && tgsRaw[prize.tgs]) {
+                sd.innerHTML = "";
                 try {
                   anim = lottie.loadAnimation({
                     container: sd,
                     renderer: "svg",
                     loop: true,
                     autoplay: true,
-                    animationData: JSON.parse(JSON.stringify(data)),
+                    animationData: cloneTGS(prize.tgs),
                   });
                 } catch (e) {
                   sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
                 }
-              } else {
-                sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
               }
-              item.appendChild(sd);
+
               item.style.left = 10 + i * ITEM_STEP - scrollOffset + "px";
               strip.appendChild(item);
               liveSlots.set(i, { el: item, anim });
@@ -999,63 +939,61 @@
             vpW / 2 +
             (Math.random() - 0.5) * 15;
           const obj = { val: 0 };
+
           gsap.to(obj, {
             val: target,
             duration: 12,
             ease: "power4.out",
-            force3D: true,
-            onUpdate: () => {
+            onUpdate() {
               scrollOffset = obj.val;
-              updateVisibleSlots();
+              updateVisible();
             },
-            onComplete: onRouletteStop,
+            onComplete: onStop,
           });
-          updateVisibleSlots();
+          updateVisible();
         }
 
-        function onRouletteStop() {
+        function onStop() {
+          // Финальное точное обновление
+          lastUpdateScroll = -999;
+          updateVisible();
+
           const slot = liveSlots.get(winnerIndex);
           if (slot) {
+            slot.el.style.borderColor = "#FFD700";
+            slot.el.style.boxShadow = "0 0 20px rgba(255,215,0,0.4)";
             gsap.to(slot.el, {
-              borderColor: "#FFD700",
-              boxShadow: "0 0 25px rgba(255,215,0,0.5)",
-              duration: 0.4,
-            });
-            gsap.to(slot.el, {
-              scale: 1.08,
-              duration: 0.3,
+              scale: 1.05,
+              duration: 0.2,
               yoyo: true,
               repeat: 2,
-              ease: "power2.inOut",
             });
           }
           document.getElementById("roulette-title").textContent =
             "🎉 Поздравляем!";
-          confetti({ particleCount: 80, spread: 80, origin: { y: 0.5 } });
-          apiCall("check-subscription", {
+          confetti({ particleCount: 60, spread: 70, origin: { y: 0.5 } });
+          api("check-subscription", {
             action: "save_roll",
             prize_key: winnerPrize.key || winnerPrize.tgs,
             prize_name: winnerPrize.name,
           }).catch(() => {});
-          setTimeout(showPrizeModal, 1200);
+          setTimeout(showPrizeModal, 1000);
         }
 
-        // ══════════════════════════════════════
-        //  MODALS
-        // ══════════════════════════════════════
-        function destroyRouletteLotties() {
-          for (const [idx, slot] of liveSlots) {
-            if (slot.anim)
+        // ═══ MODALS ═══
+        function showPrizeModal() {
+          // Убиваем ВСЕ lottie рулетки
+          for (const [, slot] of liveSlots) {
+            if (slot.anim) {
               try {
                 slot.anim.destroy();
               } catch (e) {}
-            slot.anim = null;
+              slot.anim = null;
+            }
           }
-        }
+          killAllLotties();
 
-        function showPrizeModal() {
-          destroyRouletteLotties();
-          const overlay = document.getElementById("modal-prize");
+          const ov = document.getElementById("modal-prize");
           document.getElementById("modal-prize-name").textContent =
             winnerPrize.name;
           playLottieIn(
@@ -1063,50 +1001,46 @@
             winnerPrize.tgs,
             winnerPrize.emoji,
           );
-          overlay.classList.remove("hidden");
-          overlay.style.opacity = "0";
-          gsap.to(overlay, { opacity: 1, duration: 0.3 });
-          gsap.from(overlay.querySelector(".modal-box"), {
+          ov.classList.remove("hidden");
+          gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
-            y: 40,
+            y: 30,
             opacity: 0,
-            duration: 0.5,
+            duration: 0.4,
             ease: "back.out(1.7)",
-            delay: 0.1,
           });
-          confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
+          confetti({ particleCount: 50, spread: 50, origin: { y: 0.5 } });
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
-          confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
-          gsap.to("#modal-prize .modal-box", {
+          const ov = document.getElementById("modal-prize");
+          gsap.to(ov.querySelector(".modal-box"), {
             scale: 0,
             opacity: 0,
-            duration: 0.3,
-            ease: "back.in(2)",
-            onComplete: () => {
-              document.getElementById("modal-prize").classList.add("hidden");
-              showSubscribeModal();
+            duration: 0.25,
+            onComplete() {
+              ov.classList.add("hidden");
+              showSubModal();
             },
           });
         });
 
-        function showSubscribeModal() {
-          destroyAllLotties();
-          const overlay = document.getElementById("modal-subscribe");
+        function showSubModal() {
+          killAllLotties();
+          const ov = document.getElementById("modal-subscribe");
           const pName = winnerPrize
             ? winnerPrize.name
             : USER_STATE?.prize_name || "Приз";
           document.getElementById("sub-prize-name").textContent = pName;
 
-          const tgsUrl = winnerPrize
+          const tUrl = winnerPrize
             ? winnerPrize.tgs
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-          const emoji = winnerPrize
+          const em = winnerPrize
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-          if (tgsUrl)
-            playLottieIn(document.getElementById("sub-sticker"), tgsUrl, emoji);
+          if (tUrl)
+            playLottieIn(document.getElementById("sub-sticker"), tUrl, em);
 
           const list = document.getElementById("channel-list");
           list.innerHTML = "";
@@ -1114,39 +1048,34 @@
             const li = document.createElement("li");
             li.className = "channel-item";
             li.innerHTML = `
-            <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" alt="" loading="lazy">` : "📢"}</div>
+            <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" loading="lazy">` : "📢"}</div>
             <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
-            <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>
-        `;
+            <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>`;
             list.appendChild(li);
           });
 
-          // Добавляем обработчики для кнопок подписки
-          document.querySelectorAll(".channel-sub-btn").forEach((btn) => {
+          // Обработчики
+          list.querySelectorAll(".channel-sub-btn").forEach((btn) => {
             btn.addEventListener("click", (e) => {
               e.stopPropagation();
               const link = btn.getAttribute("data-link");
               try {
-                // Используем Telegram WebApp API для открытия ссылки
-                // Это сворачивает Mini App вместо закрытия
-                Telegram.WebApp.openTelegramLink(link);
+                if (link && link.includes("t.me/"))
+                  Telegram.WebApp.openTelegramLink(link);
+                else Telegram.WebApp.openLink(link);
               } catch (err) {
-                // Fallback для тестирования вне Telegram
                 window.open(link, "_blank");
               }
             });
           });
 
-          overlay.classList.remove("hidden");
-          overlay.style.opacity = "0";
-          gsap.to(overlay, { opacity: 1, duration: 0.3 });
-          gsap.from(overlay.querySelector(".modal-box"), {
+          ov.classList.remove("hidden");
+          gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
-            y: 40,
+            y: 30,
             opacity: 0,
-            duration: 0.5,
+            duration: 0.4,
             ease: "back.out(1.7)",
-            delay: 0.1,
           });
         }
 
@@ -1158,24 +1087,21 @@
             btn.querySelector("span").textContent = "Проверяем...";
 
             try {
-              const res = await apiCall("check-subscription", {
-                action: "check",
-              });
+              const res = await api("check-subscription", { action: "check" });
               if (res.all_subscribed) {
                 document.querySelectorAll(".channel-sub-btn").forEach((b) => {
                   b.textContent = "✓";
                   b.classList.add("done");
                 });
-                showToast("Все подписки подтверждены!", "success");
-                await sleep(1000);
-                gsap.to("#modal-subscribe .modal-box", {
+                showToast("Подписки подтверждены!", "success");
+                await sleep(800);
+                const ov = document.getElementById("modal-subscribe");
+                gsap.to(ov.querySelector(".modal-box"), {
                   scale: 0,
                   opacity: 0,
-                  duration: 0.3,
-                  onComplete: () => {
-                    document
-                      .getElementById("modal-subscribe")
-                      .classList.add("hidden");
+                  duration: 0.25,
+                  onComplete() {
+                    ov.classList.add("hidden");
                     showFinalModal();
                   },
                 });
@@ -1193,13 +1119,13 @@
                     }
                   }
                 });
-                showToast("Подпишитесь на все каналы!", "error");
+                showToast("Подпишитесь на все каналы!");
                 try {
                   Telegram.WebApp.HapticFeedback.notificationOccurred("error");
                 } catch (e) {}
               }
             } catch (e) {
-              showToast("Ошибка, попробуйте позже", "error");
+              showToast("Ошибка, попробуйте позже");
             }
 
             btn.disabled = false;
@@ -1207,52 +1133,41 @@
           });
 
         function showFinalModal() {
-          destroyAllLotties();
-          const overlay = document.getElementById("modal-final");
+          killAllLotties();
+          const ov = document.getElementById("modal-final");
           const pName = winnerPrize
             ? winnerPrize.name
             : USER_STATE?.prize_name || "Приз";
           document.getElementById("final-prize-name").textContent = pName;
-
-          const tgsUrl = winnerPrize
+          const tUrl = winnerPrize
             ? winnerPrize.tgs
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-          const emoji = winnerPrize
+          const em = winnerPrize
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-          if (tgsUrl)
-            playLottieIn(
-              document.getElementById("final-sticker"),
-              tgsUrl,
-              emoji,
-            );
-
-          overlay.classList.remove("hidden");
-          overlay.style.opacity = "0";
-          gsap.to(overlay, { opacity: 1, duration: 0.3 });
-          gsap.from(overlay.querySelector(".modal-box"), {
+          if (tUrl)
+            playLottieIn(document.getElementById("final-sticker"), tUrl, em);
+          ov.classList.remove("hidden");
+          gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
-            y: 40,
+            y: 30,
             opacity: 0,
-            duration: 0.5,
+            duration: 0.4,
             ease: "back.out(1.7)",
-            delay: 0.1,
           });
-          confetti({ particleCount: 100, spread: 120, origin: { y: 0.5 } });
+          confetti({ particleCount: 60, spread: 80, origin: { y: 0.5 } });
         }
 
-        // ══════════════════════════════════════
-        //  INIT
-        // ══════════════════════════════════════
-        // Лучи — создаём через JS, не грузим DOM сразу
+        // ═══ RAYS — 6 вместо 12 ═══
         const raysBox = document.getElementById("rays-container");
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 6; i++) {
           const r = document.createElement("div");
           r.className = "ray";
           r.style.setProperty("--i", i);
           raysBox.appendChild(r);
         }
 
+        // ═══ INIT ═══
         async function init() {
           try {
             Telegram.WebApp.expand();
@@ -1260,16 +1175,14 @@
             Telegram.WebApp.setBackgroundColor("#ffffff");
           } catch (e) {}
 
-          // 1. API — состояние юзера
           try {
-            const res = await apiCall("get-user");
+            const res = await api("get-user");
             if (res.ok) {
               USER_STATE = res.user;
               CHANNELS = res.channels || [];
               PRIZES = res.prizes || [];
             }
           } catch (e) {
-            console.warn("API fail, local mode");
             PRIZES = [
               {
                 key: "prize1",
@@ -1352,173 +1265,142 @@
             ];
           }
 
-          // 2. Загружаем только НУЖНЫЕ TGS
-          // Для new: главный стикер
-          // Для rolled/claimed: только стикер приза
-          if (USER_STATE?.state === "new" || !USER_STATE) {
-            // Грузим главный + все призы (для рулетки)
-            await loadTGS(MAIN_STICKER_TGS);
+          // Грузим только нужные TGS
+          if (!USER_STATE || USER_STATE.state === "new") {
+            await loadTGS(MAIN_TGS);
+            // Призы грузим параллельно
             await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
           } else {
-            // Грузим только стикер выигранного приза
             const prizeUrl = PRIZES.find(
               (p) => p.key === USER_STATE.prize_key,
             )?.tgs;
             if (prizeUrl) await loadTGS(prizeUrl);
           }
 
-          // 3. Убираем загрузочный экран
+          // Убираем лоадер
           const ls = document.getElementById("loading-screen");
-          gsap.to(ls, {
-            opacity: 0,
-            duration: 0.3,
-            onComplete: () => ls.classList.add("hidden"),
-          });
+          ls.style.opacity = "0";
+          ls.style.transition = "opacity 0.3s";
+          setTimeout(() => ls.classList.add("hidden"), 300);
 
-          // 4. Telegram ready
           try {
             Telegram.WebApp.ready();
           } catch (e) {}
 
-          // 5. Роутинг
+          // Роутинг
           if (USER_STATE?.state === "claimed") {
             showFinalModal();
             return;
           }
-
           if (USER_STATE?.state === "rolled") {
             winnerPrize =
               PRIZES.find((p) => p.key === USER_STATE.prize_key) || PRIZES[0];
-            showSubscribeModal();
+            showSubModal();
             return;
           }
 
-          // new — показываем игру
+          // new
           document.getElementById("main-scene").classList.remove("hidden");
           playLottieIn(
             document.getElementById("star-container"),
-            MAIN_STICKER_TGS,
-            MAIN_STICKER_EMOJI,
+            MAIN_TGS,
+            MAIN_EMOJI,
           );
 
-          gsap
-            .timeline()
-            .from("#star-area", {
-              scale: 0,
-              rotation: 720,
-              duration: 1.2,
-              ease: "elastic.out(1,0.3)",
-            })
-            .from(
-              ".ray",
-              { height: 0, opacity: 0, duration: 0.5, stagger: 0.04 },
-              "-=0.6",
-            )
-            .from("#glow", { scale: 0, opacity: 0, duration: 0.6 }, "-=0.7")
-            .from(
-              "#tap-text",
-              { y: 25, opacity: 0, duration: 0.4, ease: "back.out(1.7)" },
-              "-=0.2",
-            )
-            .from(
-              "#tap-counter",
-              { y: 15, opacity: 0, duration: 0.3 },
-              "-=0.1",
-            );
+          // Анимация входа — одна простая
+          gsap.from("#star-area", {
+            scale: 0,
+            duration: 0.8,
+            ease: "back.out(1.5)",
+          });
+          gsap.from("#tap-text", {
+            y: 20,
+            opacity: 0,
+            duration: 0.4,
+            delay: 0.5,
+          });
+          gsap.from("#tap-counter", {
+            y: 15,
+            opacity: 0,
+            duration: 0.3,
+            delay: 0.6,
+          });
         }
 
         init();
 
-        // ══════════════════════════════════════
-        //  TAP
-        // ══════════════════════════════════════
-        let tapCount = 0,
-          isFinished = false;
+        // ═══ TAP ═══
+        let taps = 0,
+          finished = false;
 
         document
           .getElementById("star-wrapper")
           .addEventListener("pointerdown", (e) => {
             e.preventDefault();
-            if (isFinished) return;
-            tapCount++;
-            const progress = tapCount / MAX_TAPS,
-              sc = 1 + tapCount * 0.07;
+            if (finished) return;
+            taps++;
+            const p = taps / MAX_TAPS;
 
             try {
               Telegram.WebApp.HapticFeedback.impactOccurred("medium");
             } catch (e) {}
 
-            gsap.to("#star-container", {
-              scale: sc + 0.15,
-              duration: 0.08,
-              onComplete: () =>
-                gsap.to("#star-container", {
-                  scale: sc,
-                  duration: 0.25,
-                  ease: "elastic.out(1,0.3)",
-                }),
-            });
-            gsap.to("#glow", {
-              scale: 1 + progress * 0.9,
-              opacity: 0.5 + progress * 0.5,
-              duration: 0.15,
-            });
-            gsap.to(".ray", {
-              height: 130 + progress * 90,
-              opacity: 0.2 + progress * 0.7,
-              duration: 0.15,
-            });
+            // Простой scale — без elastic (дешевле)
+            const sc = 1 + taps * 0.06;
+            const el = document.getElementById("star-container");
+            el.style.transform = `scale(${sc + 0.1})`;
+            setTimeout(() => (el.style.transform = `scale(${sc})`), 80);
 
+            // Прогресс
             document.getElementById("progress-fill").style.width =
-              `${progress * 100}%`;
+              `${p * 100}%`;
             document.getElementById("counter-text").textContent =
-              `${tapCount} / ${MAX_TAPS}`;
+              `${taps} / ${MAX_TAPS}`;
 
-            const ft = document.createElement("div");
-            ft.className = "tap-effect";
-            ft.textContent = ["+1", "⭐", "✨", "💫"][~~(Math.random() * 4)];
-            ft.style.left = e.clientX + (Math.random() - 0.5) * 30 + "px";
-            ft.style.top = e.clientY - 15 + "px";
-            document.body.appendChild(ft);
-            setTimeout(() => ft.remove(), 700);
+            // Летающий текст — максимум 3 одновременно
+            if (document.querySelectorAll(".tap-effect").length < 3) {
+              const ft = document.createElement("div");
+              ft.className = "tap-effect";
+              ft.textContent = ["+1", "⭐", "✨"][~~(Math.random() * 3)];
+              ft.style.left = e.clientX + (Math.random() - 0.5) * 20 + "px";
+              ft.style.top = e.clientY - 10 + "px";
+              document.body.appendChild(ft);
+              setTimeout(() => ft.remove(), 600);
+            }
 
-            if (tapCount < MAX_TAPS) addShake(3 + tapCount * 0.7);
+            if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
 
-            const hue = 45 + progress * 25;
-            document.body.style.background = `radial-gradient(ellipse at 50% 40%,hsl(${hue},80%,98%),hsl(${hue},30%,96%),hsl(${hue},20%,94%))`;
-
-            if (tapCount >= MAX_TAPS) {
-              isFinished = true;
+            if (taps >= MAX_TAPS) {
+              finished = true;
               startFinale();
             }
           });
 
-        // ══════════════════════════════════════
-        //  FINALE
-        // ══════════════════════════════════════
+        // ═══ FINALE ═══
         async function startFinale() {
-          freezeShake(28, 3000);
+          freezeShake(25, 2500);
 
-          gsap.to("#star-container", {
-            scale: 2.2,
-            filter: "brightness(2.5) drop-shadow(0 0 50px rgba(255,215,0,1))",
-            duration: 2.5,
-            ease: "power1.in",
-          });
-          gsap.to("#glow", { scale: 3, opacity: 1, duration: 2.5 });
-          gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
+          const el = document.getElementById("star-container");
+          el.style.transition = "transform 2s, filter 2s";
+          el.style.transform = "scale(2)";
+          el.style.filter =
+            "brightness(2) drop-shadow(0 0 30px rgba(255,215,0,0.8))";
 
-          await sleep(3000);
+          await sleep(2500);
 
           confetti({
-            particleCount: 40,
-            spread: 50,
+            particleCount: 30,
+            spread: 40,
             origin: { x: 0.5, y: 0.4 },
           });
-          destroyAllLotties();
+          killAllLotties();
+          el.style.transition = "";
 
-          gsap.to("#flash", { opacity: 1, duration: 1, ease: "power2.in" });
-          await sleep(1000);
+          // Fade to white
+          const flash = document.getElementById("flash");
+          flash.style.transition = "opacity 0.8s";
+          flash.style.opacity = "1";
+          await sleep(800);
 
           document.getElementById("main-scene").classList.add("hidden");
           shakeAmt = 0;
@@ -1528,14 +1410,15 @@
           document.getElementById("roulette-scene").classList.remove("hidden");
           spinRoulette();
 
-          await sleep(400);
-          gsap.to("#flash", { opacity: 0, duration: 1.2, ease: "power2.out" });
+          await sleep(300);
+          flash.style.transition = "opacity 1s";
+          flash.style.opacity = "0";
         }
 
         function sleep(ms) {
           return new Promise((r) => setTimeout(r, ms));
         }
-      } // end startApp
+      } // startApp
     </script>
   </body>
 </html>
