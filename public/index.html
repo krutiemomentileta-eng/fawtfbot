@@ -966,6 +966,22 @@
           // Замораживаем Lottie которые далеко от центра viewport
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
           const center = scrollOffset + vpW / 2;
+          for (const [idx, s] of liveSlots) {
+            if (!s.anim) continue;
+            const itemCenter = 10 + idx * ITEM_STEP + ITEM_W / 2;
+            const dist = Math.abs(itemCenter - center);
+            if (dist > vpW * 0.6) {
+              if (!s.paused) {
+                s.anim.pause();
+                s.paused = true;
+              }
+            } else {
+              if (s.paused) {
+                s.anim.play();
+                s.paused = false;
+              }
+            }
+          }
           // Двигаем strip целиком через transform (GPU!)
           // вместо двигания каждого элемента отдельно
           strip.style.transform = `translate3d(${-scrollOffset}px, 0, 0)`;
