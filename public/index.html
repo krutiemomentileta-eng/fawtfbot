@@ -751,7 +751,7 @@
             try {
               const anim = lottie.loadAnimation({
                 container,
-                renderer: "svg",
+                renderer: "canvas",
                 loop: true,
                 autoplay: true,
                 animationData: data,
@@ -963,8 +963,9 @@
 
         let lastScroll = -999;
         function updateVisible() {
+          // Замораживаем Lottie которые далеко от центра viewport
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
-
+          const center = scrollOffset + vpW / 2;
           // Двигаем strip целиком через transform (GPU!)
           // вместо двигания каждого элемента отдельно
           strip.style.transform = `translate3d(${-scrollOffset}px, 0, 0)`;
@@ -998,7 +999,7 @@
               try {
                 anim = lottie.loadAnimation({
                   container: sd,
-                  renderer: "svg",
+                  renderer: "canvas",
                   loop: true,
                   autoplay: true,
                   animationData: data,
