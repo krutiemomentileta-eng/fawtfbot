@@ -721,6 +721,10 @@
         const tgsRaw = {};
         const tgsString = {};
 
+        try {
+          lottie.setQuality(2);
+        } catch (e) {}
+
         async function loadTGS(url) {
           if (tgsRaw[url] !== undefined) return tgsRaw[url];
           try {
@@ -751,11 +755,12 @@
             try {
               const anim = lottie.loadAnimation({
                 container,
-                renderer: "canvas",
+                renderer: "svg",
                 loop: true,
                 autoplay: true,
                 animationData: data,
               });
+              anim.setSubframe(false); // убирает интерполяцию — меньше расчётов
               activeLotties.push(anim);
               return anim;
             } catch (e) {}
@@ -1013,13 +1018,15 @@
             const data = cloneTGS(prize.tgs);
             if (data) {
               try {
+                // После создания anim в updateVisible():
                 anim = lottie.loadAnimation({
                   container: sd,
-                  renderer: "canvas",
+                  renderer: "svg",
                   loop: true,
                   autoplay: true,
                   animationData: data,
                 });
+                anim.setSubframe(false); // ← добавить эту строку
               } catch (e) {
                 sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
               }
