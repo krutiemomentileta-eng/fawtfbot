@@ -8,6 +8,11 @@
     />
     <title>⭐ Tap & Win!</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap"
+      rel="stylesheet"
+    />
     <style>
       * {
         margin: 0;
@@ -580,7 +585,7 @@
         margin-bottom: 14px;
       }
 
-      /* Timer — compact, gray */
+      /* Timer — compact, gray, Orbitron */
       .timer-wrap {
         background: #f0f0f0;
         border-radius: 12px;
@@ -592,7 +597,7 @@
         gap: 12px;
       }
       .timer-display {
-        font-family: "Courier New", Consolas, monospace;
+        font-family: "Orbitron", sans-serif;
         font-size: 24px;
         font-weight: 900;
         color: #333;
@@ -601,15 +606,18 @@
       }
       .timer-done {
         color: #4caf50 !important;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
         font-size: 16px !important;
         letter-spacing: 0 !important;
+        font-weight: 800 !important;
       }
       .speed-badge {
         display: flex;
         align-items: center;
         gap: 3px;
-        background: linear-gradient(135deg, #ffd700, #ffa500);
-        color: #333;
+        background: #333;
+        color: #fff;
         font-weight: 800;
         padding: 4px 10px;
         border-radius: 20px;
@@ -638,7 +646,7 @@
         flex-shrink: 0;
       }
 
-      /* Action buttons */
+      /* Action buttons — dark */
       .final-actions {
         display: flex;
         gap: 10px;
@@ -660,17 +668,16 @@
         flex-direction: column;
         align-items: center;
         gap: 4px;
+        background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       }
       .btn-action:active {
         transform: scale(0.95);
       }
-      .btn-speedup {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-      }
+      .btn-speedup,
       .btn-earn-stars {
-        background: linear-gradient(135deg, #f5af19, #f12711);
-        box-shadow: 0 4px 15px rgba(241, 39, 17, 0.2);
+        background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       }
       .btn-action-icon {
         width: 24px;
