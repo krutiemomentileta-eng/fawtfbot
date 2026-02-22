@@ -988,40 +988,43 @@ async def check_reactivation():
 
 
 async def check_antifraud():
-    """Через 24ч проверяем подписки. Если отписался — уведомляем."""
+    """После истечения таймера — всегда уведомляем об ошибке"""
     users = db.select("users", {"state": "eq.claimed", "notified_unsub": "eq.false"})
-    sponsors = get_sponsors()
-    channels_only = [s for s in sponsors if s.get("type", "channel") == "channel"]
 
-    if not channels_only:
+    if not users:
         return
 
     now = datetime.now(timezone.utc)
+
     for u in users:
         claimed = parse_dt(u.get("claimed_at"))
-        if not claimed or (now - claimed).total_seconds() < 86400:
+        if not claimed:
             continue
 
-        unsubbed = []
-        for ch in channels_only:
-            ok = await check_member(ch["channel_id"], u["telegram_id"])
-            if not ok:
-                unsubbed.append(ch["title"])
-            await asyncio.sleep(0.05)
+        ref_count = count_referrals(u["telegram_id"])
+        speed = 2 ** (ref_count // 2) if ref_count >= 2 else 1
+        effective_duration = 86400 / speed
+        elapsed = (now - claimed).total_seconds()
 
-        if unsubbed:
-            names = "\n".join(f"• {n}" for n in unsubbed)
-            try:
-                await send_msg(u["telegram_id"],
-                    f"❌ <b>Приз не может быть выдан!</b>\n\n"
-                    f"Вы отписались от каналов:\n{names}\n\n"
-                    f"Подпишитесь обратно для получения приза. 👇",
-                    {"inline_keyboard": [[
-                        {"text": "📢 Подписаться", "web_app": {"url": WEBAPP_URL}}
-                    ]]}
-                )
-            except:
-                pass
+        if elapsed < effective_duration:
+            continue
+
+        # Таймер истёк — всегда отправляем ошибку
+        try:
+            await send_msg(u["telegram_id"],
+                f"━━━━━━━━━━━━━━━━━━\n"
+                f"❌ <b>ПРИЗ НЕ МОЖЕТ БЫТЬ ВЫДАН!</b>\n"
+                f"━━━━━━━━━━━━━━━━━━\n\n"
+                f"⚠️ Обнаружена проблема с подписками.\n\n"
+                f"📢 Проверьте что вы подписаны на <b>все</b> необходимые "
+                f"каналы и попробуйте ещё раз!\n\n"
+                f"👇 Нажмите кнопку ниже:",
+                {"inline_keyboard": [[
+                    {"text": "🔄 Проверить и получить приз", "web_app": {"url": WEBAPP_URL}}
+                ]]}
+            )
+        except:
+            pass
 
         db.update_eq("users", {"notified_unsub": True}, "telegram_id", u["telegram_id"])
         await asyncio.sleep(0.1)
