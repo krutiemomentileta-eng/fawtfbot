@@ -334,6 +334,9 @@ async def api_get_user(req: Request):
     sponsors = get_sponsors()
     prizes = get_prizes()
 
+    # Сортировка: сначала каналы, потом боты
+    sponsors.sort(key=lambda x: (0 if x.get("type", "channel") == "channel" else 1))
+
     return {
         "ok": True,
         "user": {
@@ -345,7 +348,7 @@ async def api_get_user(req: Request):
         },
         "channels": [
             {
-                "id": c["channel_id"],
+                "id": str(c["channel_id"]),  # ВСЕГДА строка — избегаем потери точности в JS
                 "name": c["title"],
                 "type": c.get("type", "channel"),
                 "link": c["invite_link"] if c["invite_link"].startswith("http")
@@ -361,6 +364,7 @@ async def api_get_user(req: Request):
             for p in prizes
         ],
     }
+
 
 @app.post("/api/check-subscription")
 async def api_check_sub(req: Request):
@@ -384,17 +388,25 @@ async def api_check_sub(req: Request):
         return {"ok": True, "state": "rolled"}
 
     if action == "mark_bot_opened":
-        # Пользователь нажал "Открыть" на боте — запоминаем
         bot_id = body.get("bot_id")
         if bot_id:
-            # Сохраняем в отдельную таблицу или в JSON-поле
-            opened = json.loads(user.get("opened_bots") or "[]")
             bot_id_str = str(bot_id)
+            # Читаем свежие данные
+            fresh = db.select_eq("users", "telegram_id", tg_id)
+            if fresh:
+                opened = json.loads(fresh[0].get("opened_bots") or "[]")
+            else:
+                opened = []
+
             if bot_id_str not in opened:
                 opened.append(bot_id_str)
-                db.update_eq("users", {
+                result = db.update_eq("users", {
                     "opened_bots": json.dumps(opened)
                 }, "telegram_id", tg_id)
+                print(f"[mark_bot_opened] user={tg_id} bot={bot_id_str} opened={opened} result={result}")
+            else:
+                print(f"[mark_bot_opened] user={tg_id} bot={bot_id_str} already in list")
+
         return {"ok": True}
 
     if action == "check":
@@ -402,27 +414,28 @@ async def api_check_sub(req: Request):
         results = {}
         all_ok = True
 
-        # Загружаем список открытых ботов пользователя
-        fresh_user = get_or_create(tg_id)
+        # Свежие данные пользователя
+        fresh = db.select_eq("users", "telegram_id", tg_id)
+        fresh_user = fresh[0] if fresh else user
         opened_bots = json.loads(fresh_user.get("opened_bots") or "[]")
+        print(f"[check] user={tg_id} opened_bots={opened_bots}")
 
         for sp in sponsors:
             sp_type = sp.get("type", "channel")
             sp_id = str(sp["channel_id"])
 
             if sp_type == "bot":
-                # Для ботов: проверяем нажал ли кнопку "Открыть"
                 ok = sp_id in opened_bots
+                print(f"[check] bot sp_id={sp_id} in opened_bots={opened_bots} => {ok}")
             else:
-                # Для каналов: проверяем подписку через API
                 ok = await check_member(sp["channel_id"], tg_id)
 
             results[sp_id] = ok
             if not ok:
                 all_ok = False
 
-        new_state = user["state"]
-        if all_ok and user["state"] == "rolled":
+        new_state = fresh_user["state"]
+        if all_ok and fresh_user["state"] == "rolled":
             db.update_eq("users", {"state": "claimed"}, "telegram_id", tg_id)
             new_state = "claimed"
 

@@ -1170,19 +1170,14 @@
                 ? "🤖"
                 : "📢";
 
-            const typeLabel = isBot ? "Бот" : "Канал";
             const btnText = isBot ? "Открыть" : "Подписаться";
-            const btnClass = isBot
-              ? "channel-sub-btn bot-btn"
-              : "channel-sub-btn";
 
             li.innerHTML = `
               <div class="channel-avatar">${avatarIcon}</div>
               <div class="channel-info">
                 <div class="channel-name">${ch.name}</div>
-                <div class="channel-type-badge">${typeLabel}</div>
               </div>
-              <button class="${btnClass}"
+              <button class="channel-sub-btn"
                       data-link="${ch.link}"
                       data-type="${ch.type || "channel"}"
                       data-id="${ch.id}">
@@ -1198,7 +1193,6 @@
               const type = btn.getAttribute("data-type");
               const id = btn.getAttribute("data-id");
 
-              // Открываем ссылку
               try {
                 if (link && link.includes("t.me/"))
                   Telegram.WebApp.openTelegramLink(link);
@@ -1207,13 +1201,12 @@
                 window.open(link, "_blank");
               }
 
-              // Для ботов: сразу помечаем как «открыто»
+              // Для ботов: отмечаем как открыто
               if (type === "bot" && !openedBots.has(id)) {
                 openedBots.add(id);
-                btn.textContent = "✓ Открыт";
+                btn.textContent = "✓";
                 btn.classList.add("done");
 
-                // Отправляем на сервер
                 api("check-subscription", {
                   action: "mark_bot_opened",
                   bot_id: id,
@@ -1274,7 +1267,7 @@
                     }
                   }
                 });
-                toast("Подпишитесь на все каналы и откройте всех ботов!");
+                toast("Подпишитесь на все каналы!");
                 try {
                   Telegram.WebApp.HapticFeedback.notificationOccurred("error");
                 } catch (e) {}
