@@ -173,41 +173,51 @@ async def parse_channel(channel_input):
     return info
 
 async def parse_bot(bot_input):
-    """Парсит бота: имя, username, аватарка"""
+    """Парсит бота — getChat не работает с ботами, поэтому берём инфо иначе"""
     bot_input = bot_input.strip()
-    if "t.me/" in bot_input:
-        bot_input = "@" + bot_input.split("t.me/")[-1].split("/")[0].split("?")[0]
-    if not bot_input.startswith("@"):
-        bot_input = "@" + bot_input
 
-    r = await tg("getChat", {"chat_id": bot_input})
-    if not r.get("ok"):
+    # Нормализация
+    if "t.me/" in bot_input:
+        bot_input = bot_input.split("t.me/")[-1].split("/")[0].split("?")[0]
+    bot_input = bot_input.lstrip("@")
+
+    if not bot_input:
         return None
 
-    chat = r["result"]
+    # Пробуем получить инфо через getChat (вдруг бот писал нашему боту)
+    r = await tg("getChat", {"chat_id": f"@{bot_input}"})
 
-    # Проверяем что это бот
-    if not chat.get("is_bot", False):
-        # Может быть getChat не возвращает is_bot для ботов через getChat
-        # Попробуем по username
-        pass
+    if r.get("ok"):
+        chat = r["result"]
+        avatar = ""
+        if chat.get("photo"):
+            fid = chat["photo"].get("big_file_id") or chat["photo"].get("small_file_id")
+            if fid:
+                avatar = await download_file_b64(fid)
 
-    info = {
-        "channel_id": chat["id"],
+        return {
+            "channel_id": chat["id"],
+            "type": "bot",
+            "title": chat.get("first_name") or chat.get("title") or bot_input,
+            "username": chat.get("username", bot_input),
+            "invite_link": f"https://t.me/{chat.get('username', bot_input)}",
+            "avatar_base64": avatar,
+            "member_count": 0,
+        }
+
+    # getChat не сработал — сохраняем просто по username
+    # Генерируем уникальный ID из username
+    uid = int(hashlib.md5(bot_input.encode()).hexdigest()[:15], 16)
+
+    return {
+        "channel_id": uid,
         "type": "bot",
-        "title": chat.get("first_name", "") or chat.get("title", ""),
-        "username": chat.get("username", ""),
-        "invite_link": f"https://t.me/{chat['username']}" if chat.get("username") else "",
+        "title": f"@{bot_input}",
+        "username": bot_input,
+        "invite_link": f"https://t.me/{bot_input}",
         "avatar_base64": "",
         "member_count": 0,
     }
-
-    if chat.get("photo"):
-        fid = chat["photo"].get("big_file_id") or chat["photo"].get("small_file_id")
-        if fid:
-            info["avatar_base64"] = await download_file_b64(fid)
-
-    return info
 
 async def check_member(channel_id, user_id):
     r = await tg("getChatMember", {"chat_id": channel_id, "user_id": user_id})
