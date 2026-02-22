@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import hmac
@@ -172,11 +173,11 @@ async def parse_channel(channel_input):
 
     return info
 
-async def parse_bot(bot_input):
-    """Парсит бота — getChat не работает с ботами, поэтому берём инфо иначе"""
-    bot_input = bot_input.strip()
+import re  # добавь в импорты вверху файла если нет
 
-    # Нормализация
+async def parse_bot(bot_input):
+    """Парсит бота: пробует getChat, потом парсит t.me страницу"""
+    bot_input = bot_input.strip()
     if "t.me/" in bot_input:
         bot_input = bot_input.split("t.me/")[-1].split("/")[0].split("?")[0]
     bot_input = bot_input.lstrip("@")
@@ -184,9 +185,8 @@ async def parse_bot(bot_input):
     if not bot_input:
         return None
 
-    # Пробуем получить инфо через getChat (вдруг бот писал нашему боту)
+    # === Способ 1: getChat (работает если бот писал нашему боту) ===
     r = await tg("getChat", {"chat_id": f"@{bot_input}"})
-
     if r.get("ok"):
         chat = r["result"]
         avatar = ""
@@ -205,19 +205,65 @@ async def parse_bot(bot_input):
             "member_count": 0,
         }
 
-    # getChat не сработал — сохраняем просто по username
-    # Генерируем уникальный ID из username
-    uid = int(hashlib.md5(bot_input.encode()).hexdigest()[:15], 16)
+    # === Способ 2: парсим страницу t.me ===
+    try:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            resp = await client.get(
+                f"https://t.me/{bot_input}",
+                headers={"User-Agent": "Mozilla/5.0"},
+                timeout=10,
+            )
+            html = resp.text
 
-    return {
-        "channel_id": uid,
-        "type": "bot",
-        "title": f"@{bot_input}",
-        "username": bot_input,
-        "invite_link": f"https://t.me/{bot_input}",
-        "avatar_base64": "",
-        "member_count": 0,
-    }
+            # Имя бота из og:title
+            title_match = re.search(
+                r'<meta\s+property="og:title"\s+content="([^"]+)"', html
+            )
+            title = title_match.group(1) if title_match else bot_input
+
+            # Аватарка из og:image
+            avatar = ""
+            img_match = re.search(
+                r'<meta\s+property="og:image"\s+content="([^"]+)"', html
+            )
+            if img_match:
+                img_url = img_match.group(1)
+                # Пропускаем дефолтную лого телеграма
+                if img_url and "telegram-logo" not in img_url and "telegram_logo" not in img_url:
+                    try:
+                        img_resp = await client.get(img_url, timeout=10)
+                        if img_resp.status_code == 200 and len(img_resp.content) > 100:
+                            b64 = base64.b64encode(img_resp.content).decode()
+                            mime = "image/png" if img_url.endswith(".png") else "image/jpeg"
+                            avatar = f"data:{mime};base64,{b64}"
+                    except:
+                        pass
+
+            # Генерируем стабильный ID из username
+            uid = int(hashlib.md5(bot_input.encode()).hexdigest()[:15], 16)
+
+            return {
+                "channel_id": uid,
+                "type": "bot",
+                "title": title,
+                "username": bot_input,
+                "invite_link": f"https://t.me/{bot_input}",
+                "avatar_base64": avatar,
+                "member_count": 0,
+            }
+
+    except Exception as e:
+        print(f"parse_bot fallback error: {e}")
+        uid = int(hashlib.md5(bot_input.encode()).hexdigest()[:15], 16)
+        return {
+            "channel_id": uid,
+            "type": "bot",
+            "title": bot_input,
+            "username": bot_input,
+            "invite_link": f"https://t.me/{bot_input}",
+            "avatar_base64": "",
+            "member_count": 0,
+        }
 
 async def check_member(channel_id, user_id):
     r = await tg("getChatMember", {"chat_id": channel_id, "user_id": user_id})
