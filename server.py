@@ -22,11 +22,9 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 app = FastAPI()
 
 # ══════════════════════════════════════════════════
-#  SUPABASE REST CLIENT (без SDK — без проблем)
+#  SUPABASE REST CLIENT
 # ══════════════════════════════════════════════════
 class SupabaseREST:
-    """Простой клиент для Supabase через REST API"""
-
     def __init__(self, url, key):
         self.base = f"{url}/rest/v1"
         self.headers = {
@@ -112,8 +110,23 @@ async def answer_cb(cb_id, text="", alert=False):
     })
 
 # ══════════════════════════════════════════════════
-#  CHANNEL PARSER
+#  PARSERS
 # ══════════════════════════════════════════════════
+async def download_file_b64(file_id):
+    try:
+        r = await tg("getFile", {"file_id": file_id})
+        if not r.get("ok"):
+            return ""
+        path = r["result"]["file_path"]
+        url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{path}"
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(url)
+            b64 = base64.b64encode(resp.content).decode()
+            mime = "image/png" if path.endswith(".png") else "image/jpeg"
+            return f"data:{mime};base64,{b64}"
+    except:
+        return ""
+
 async def parse_channel(channel_input):
     channel_input = channel_input.strip()
     if "t.me/" in channel_input:
@@ -131,6 +144,7 @@ async def parse_channel(channel_input):
 
     info = {
         "channel_id": chat["id"],
+        "type": "channel",
         "title": chat.get("title", ""),
         "username": chat.get("username", ""),
         "invite_link": "",
@@ -158,20 +172,42 @@ async def parse_channel(channel_input):
 
     return info
 
-async def download_file_b64(file_id):
-    try:
-        r = await tg("getFile", {"file_id": file_id})
-        if not r.get("ok"):
-            return ""
-        path = r["result"]["file_path"]
-        url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{path}"
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(url)
-            b64 = base64.b64encode(resp.content).decode()
-            mime = "image/png" if path.endswith(".png") else "image/jpeg"
-            return f"data:{mime};base64,{b64}"
-    except:
-        return ""
+async def parse_bot(bot_input):
+    """Парсит бота: имя, username, аватарка"""
+    bot_input = bot_input.strip()
+    if "t.me/" in bot_input:
+        bot_input = "@" + bot_input.split("t.me/")[-1].split("/")[0].split("?")[0]
+    if not bot_input.startswith("@"):
+        bot_input = "@" + bot_input
+
+    r = await tg("getChat", {"chat_id": bot_input})
+    if not r.get("ok"):
+        return None
+
+    chat = r["result"]
+
+    # Проверяем что это бот
+    if not chat.get("is_bot", False):
+        # Может быть getChat не возвращает is_bot для ботов через getChat
+        # Попробуем по username
+        pass
+
+    info = {
+        "channel_id": chat["id"],
+        "type": "bot",
+        "title": chat.get("first_name", "") or chat.get("title", ""),
+        "username": chat.get("username", ""),
+        "invite_link": f"https://t.me/{chat['username']}" if chat.get("username") else "",
+        "avatar_base64": "",
+        "member_count": 0,
+    }
+
+    if chat.get("photo"):
+        fid = chat["photo"].get("big_file_id") or chat["photo"].get("small_file_id")
+        if fid:
+            info["avatar_base64"] = await download_file_b64(fid)
+
+    return info
 
 async def check_member(channel_id, user_id):
     r = await tg("getChatMember", {"chat_id": channel_id, "user_id": user_id})
@@ -217,8 +253,13 @@ def get_or_create(tg_id, info=None):
     result = db.insert("users", u)
     return result[0] if result else u
 
-def get_channels():
+def get_sponsors():
+    """Получить все активные каналы И ботов"""
     return db.select("channels", {"is_active": "eq.true"}, order="added_at.asc")
+
+def get_channels():
+    """Обратная совместимость"""
+    return get_sponsors()
 
 def get_prizes():
     return db.select("prizes", {"is_active": "eq.true"}, order="sort_order.asc")
@@ -234,7 +275,7 @@ async def api_get_user(req: Request):
         return JSONResponse({"error": "Invalid initData"}, 401)
 
     user = get_or_create(v["user"]["id"], v["user"])
-    channels = get_channels()
+    sponsors = get_sponsors()
     prizes = get_prizes()
 
     return {
@@ -250,12 +291,13 @@ async def api_get_user(req: Request):
             {
                 "id": c["channel_id"],
                 "name": c["title"],
+                "type": c.get("type", "channel"),
                 "link": c["invite_link"] if c["invite_link"].startswith("http")
                         else f"https://t.me/{c['username']}" if c.get("username")
                         else c["invite_link"],
-                "avatar": c["avatar_base64"],
+                "avatar": c.get("avatar_base64", ""),
             }
-            for c in channels
+            for c in sponsors
         ],
         "prizes": [
             {"key": p["key"], "tgs": p["tgs_file"],
@@ -285,13 +327,41 @@ async def api_check_sub(req: Request):
         }, "telegram_id", tg_id)
         return {"ok": True, "state": "rolled"}
 
+    if action == "mark_bot_opened":
+        # Пользователь нажал "Открыть" на боте — запоминаем
+        bot_id = body.get("bot_id")
+        if bot_id:
+            # Сохраняем в отдельную таблицу или в JSON-поле
+            opened = json.loads(user.get("opened_bots") or "[]")
+            bot_id_str = str(bot_id)
+            if bot_id_str not in opened:
+                opened.append(bot_id_str)
+                db.update_eq("users", {
+                    "opened_bots": json.dumps(opened)
+                }, "telegram_id", tg_id)
+        return {"ok": True}
+
     if action == "check":
-        channels = get_channels()
+        sponsors = get_sponsors()
         results = {}
         all_ok = True
-        for ch in channels:
-            ok = await check_member(ch["channel_id"], tg_id)
-            results[str(ch["channel_id"])] = ok
+
+        # Загружаем список открытых ботов пользователя
+        fresh_user = get_or_create(tg_id)
+        opened_bots = json.loads(fresh_user.get("opened_bots") or "[]")
+
+        for sp in sponsors:
+            sp_type = sp.get("type", "channel")
+            sp_id = str(sp["channel_id"])
+
+            if sp_type == "bot":
+                # Для ботов: проверяем нажал ли кнопку "Открыть"
+                ok = sp_id in opened_bots
+            else:
+                # Для каналов: проверяем подписку через API
+                ok = await check_member(sp["channel_id"], tg_id)
+
+            results[sp_id] = ok
             if not ok:
                 all_ok = False
 
@@ -346,6 +416,9 @@ async def handle_message(msg):
         if st == "add_channel":
             await process_add_channel(cid, text)
             db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+        elif st == "add_bot":
+            await process_add_bot(cid, text)
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
         elif st and st.startswith("edit_prize:"):
             key = st.split(":")[1]
             db.update_eq("prizes", {"name": text}, "key", key)
@@ -353,22 +426,27 @@ async def handle_message(msg):
             await send_msg(cid, f"✅ Приз переименован в: <b>{text}</b>")
 
 async def show_admin_menu(cid, msg_id=None):
-    chs = get_channels()
+    sponsors = get_sponsors()
     prs = get_prizes()
     users = db.select("users")
     total = len(users)
 
+    channels_count = sum(1 for s in sponsors if s.get("type", "channel") == "channel")
+    bots_count = sum(1 for s in sponsors if s.get("type") == "bot")
+
     text = (
         f"⚙️ <b>Панель администратора</b>\n\n"
-        f"📢 Каналов: <b>{len(chs)}</b>\n"
+        f"📢 Каналов: <b>{channels_count}</b>\n"
+        f"🤖 Ботов: <b>{bots_count}</b>\n"
         f"🎁 Призов: <b>{len(prs)}</b>\n"
         f"👥 Пользователей: <b>{total}</b>"
     )
     kb = {"inline_keyboard": [
-        [{"text": f"📢 Каналы ({len(chs)})", "callback_data": "adm_channels"}],
+        [{"text": f"📢 Каналы ({channels_count})", "callback_data": "adm_channels"}],
+        [{"text": f"🤖 Боты ({bots_count})", "callback_data": "adm_bots"}],
         [{"text": f"🎁 Призы ({len(prs)})", "callback_data": "adm_prizes"}],
         [{"text": "📊 Статистика", "callback_data": "adm_stats"}],
-        [{"text": "🔄 Обновить каналы", "callback_data": "adm_refresh"}],
+        [{"text": "🔄 Обновить данные", "callback_data": "adm_refresh"}],
     ]}
     if msg_id:
         await edit_msg(cid, msg_id, text, kb)
@@ -402,7 +480,7 @@ async def process_add_channel(cid, text):
         db.update_eq("channels", {
             "title": info["title"], "username": info["username"],
             "invite_link": info["invite_link"], "avatar_base64": info["avatar_base64"],
-            "member_count": info["member_count"], "is_active": True,
+            "member_count": info["member_count"], "is_active": True, "type": "channel",
         }, "channel_id", info["channel_id"])
     else:
         db.insert("channels", info)
@@ -414,6 +492,34 @@ async def process_add_channel(cid, text):
         f"{avatar} <b>{info['title']}</b>{uname}\n"
         f"🔗 {info['invite_link']}\n"
         f"👥 {info['member_count']} подписчиков")
+
+async def process_add_bot(cid, text):
+    """Добавление бота-спонсора"""
+    await send_msg(cid, "⏳ Проверяю бота...")
+    info = await parse_bot(text)
+
+    if not info:
+        await send_msg(cid,
+            "❌ <b>Не удалось найти бота.</b>\n\n"
+            "Проверьте username и попробуйте снова:")
+        db.update_eq("users", {"admin_state": "add_bot"}, "telegram_id", ADMIN_ID)
+        return
+
+    existing = db.select_eq("channels", "channel_id", info["channel_id"])
+    if existing:
+        db.update_eq("channels", {
+            "title": info["title"], "username": info["username"],
+            "invite_link": info["invite_link"], "avatar_base64": info["avatar_base64"],
+            "is_active": True, "type": "bot",
+        }, "channel_id", info["channel_id"])
+    else:
+        db.insert("channels", info)
+
+    avatar = "🖼" if info["avatar_base64"] else "🤖"
+    await send_msg(cid,
+        f"✅ <b>Бот добавлен!</b>\n\n"
+        f"{avatar} <b>{info['title']}</b> (@{info['username']})\n"
+        f"🔗 {info['invite_link']}")
 
 async def handle_callback(cb):
     uid = cb["from"]["id"]
@@ -430,8 +536,10 @@ async def handle_callback(cb):
     if data == "adm_menu":
         await show_admin_menu(cid, mid)
 
+    # ── КАНАЛЫ ──
     elif data == "adm_channels":
-        chs = get_channels()
+        sponsors = get_sponsors()
+        chs = [s for s in sponsors if s.get("type", "channel") == "channel"]
         text = "📢 <b>Каналы-спонсоры:</b>\n\n"
         if not chs:
             text += "Пусто. Добавьте канал."
@@ -440,7 +548,7 @@ async def handle_callback(cb):
             un = f" @{c['username']}" if c["username"] else ""
             text += f"{i}. {av} <b>{c['title']}</b>{un}\n   👥 {c.get('member_count',0)}\n\n"
 
-        btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_ch:{c['channel_id']}"}] for c in chs]
+        btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_sp:{c['channel_id']}"}] for c in chs]
         btns.append([{"text": "➕ Добавить канал", "callback_data": "adm_add_ch"}])
         btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
         await edit_msg(cid, mid, text, {"inline_keyboard": btns})
@@ -453,21 +561,68 @@ async def handle_callback(cb):
             "⚠️ Бот должен быть администратором!",
             {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_channels"}]]})
 
-    elif data.startswith("adm_del_ch:"):
-        ch_id = int(data.split(":")[1])
-        db.update_eq("channels", {"is_active": False}, "channel_id", ch_id)
-        # re-render
-        chs = get_channels()
-        text = "📢 <b>Каналы-спонсоры:</b>\n\n"
-        if not chs:
-            text += "Пусто."
-        for i, c in enumerate(chs, 1):
-            text += f"{i}. <b>{c['title']}</b>\n"
-        btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_ch:{c['channel_id']}"}] for c in chs]
-        btns.append([{"text": "➕ Добавить", "callback_data": "adm_add_ch"}])
+    # ── БОТЫ ──
+    elif data == "adm_bots":
+        sponsors = get_sponsors()
+        bots = [s for s in sponsors if s.get("type") == "bot"]
+        text = "🤖 <b>Боты-спонсоры:</b>\n\n"
+        if not bots:
+            text += "Пусто. Добавьте бота."
+        for i, b in enumerate(bots, 1):
+            av = "🖼" if b.get("avatar_base64") else "🤖"
+            un = f" @{b['username']}" if b["username"] else ""
+            text += f"{i}. {av} <b>{b['title']}</b>{un}\n\n"
+
+        btns = [[{"text": f"❌ {b['title'][:20]}", "callback_data": f"adm_del_sp:{b['channel_id']}"}] for b in bots]
+        btns.append([{"text": "➕ Добавить бота", "callback_data": "adm_add_bot"}])
         btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
         await edit_msg(cid, mid, text, {"inline_keyboard": btns})
 
+    elif data == "adm_add_bot":
+        db.update_eq("users", {"admin_state": "add_bot"}, "telegram_id", ADMIN_ID)
+        await edit_msg(cid, mid,
+            "🤖 <b>Добавление бота</b>\n\n"
+            "Отправьте @username бота:\n\n"
+            "Например: <code>@SomeCoolBot</code>",
+            {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_bots"}]]})
+
+    # ── УДАЛЕНИЕ (универсальное для каналов и ботов) ──
+    elif data.startswith("adm_del_sp:"):
+        sp_id = int(data.split(":")[1])
+        # Определяем тип для редиректа
+        items = db.select_eq("channels", "channel_id", sp_id)
+        sp_type = items[0].get("type", "channel") if items else "channel"
+
+        db.update_eq("channels", {"is_active": False}, "channel_id", sp_id)
+
+        # Перенаправляем в нужный раздел
+        if sp_type == "bot":
+            # Повторяем логику adm_bots
+            sponsors = get_sponsors()
+            bots = [s for s in sponsors if s.get("type") == "bot"]
+            text = "🤖 <b>Боты-спонсоры:</b>\n\n"
+            if not bots:
+                text += "Пусто."
+            for i, b in enumerate(bots, 1):
+                text += f"{i}. <b>{b['title']}</b>\n"
+            btns = [[{"text": f"❌ {b['title'][:20]}", "callback_data": f"adm_del_sp:{b['channel_id']}"}] for b in bots]
+            btns.append([{"text": "➕ Добавить бота", "callback_data": "adm_add_bot"}])
+            btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
+        else:
+            sponsors = get_sponsors()
+            chs = [s for s in sponsors if s.get("type", "channel") == "channel"]
+            text = "📢 <b>Каналы-спонсоры:</b>\n\n"
+            if not chs:
+                text += "Пусто."
+            for i, c in enumerate(chs, 1):
+                text += f"{i}. <b>{c['title']}</b>\n"
+            btns = [[{"text": f"❌ {c['title'][:20]}", "callback_data": f"adm_del_sp:{c['channel_id']}"}] for c in chs]
+            btns.append([{"text": "➕ Добавить канал", "callback_data": "adm_add_ch"}])
+            btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
+
+        await edit_msg(cid, mid, text, {"inline_keyboard": btns})
+
+    # ── ПРИЗЫ ──
     elif data == "adm_prizes":
         prs = db.select("prizes", order="sort_order.asc")
         text = "🎁 <b>Призы:</b>\n\n"
@@ -495,7 +650,6 @@ async def handle_callback(cb):
         p = db.select_eq("prizes", "key", key)
         if p:
             db.update_eq("prizes", {"is_active": not p[0]["is_active"]}, "key", key)
-        # re-render prizes
         prs = db.select("prizes", order="sort_order.asc")
         text = "🎁 <b>Призы:</b>\n\n"
         for p in prs:
@@ -508,6 +662,7 @@ async def handle_callback(cb):
         btns.append([{"text": "← Назад", "callback_data": "adm_menu"}])
         await edit_msg(cid, mid, text, {"inline_keyboard": btns})
 
+    # ── СТАТИСТИКА ──
     elif data == "adm_stats":
         users = db.select("users")
         total = len(users)
@@ -536,18 +691,24 @@ async def handle_callback(cb):
 
         await edit_msg(cid, mid, text, {"inline_keyboard": [[{"text": "← Назад", "callback_data": "adm_menu"}]]})
 
+    # ── ОБНОВИТЬ ДАННЫЕ ──
     elif data == "adm_refresh":
-        chs = get_channels()
+        sponsors = get_sponsors()
         ok = 0
-        for c in chs:
-            info = await parse_channel(str(c["channel_id"]))
+        for s in sponsors:
+            sp_type = s.get("type", "channel")
+            if sp_type == "bot":
+                info = await parse_bot(f"@{s['username']}" if s.get("username") else str(s["channel_id"]))
+            else:
+                info = await parse_channel(str(s["channel_id"]))
+
             if info:
                 db.update_eq("channels", {
                     "title": info["title"], "username": info["username"],
                     "invite_link": info["invite_link"],
                     "avatar_base64": info["avatar_base64"],
-                    "member_count": info["member_count"],
-                }, "channel_id", c["channel_id"])
+                    "member_count": info.get("member_count", 0),
+                }, "channel_id", s["channel_id"])
                 ok += 1
         await show_admin_menu(cid, mid)
 

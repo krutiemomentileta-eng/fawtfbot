@@ -74,7 +74,7 @@
         transition: opacity 0.8s;
       }
 
-      /* MAIN — GPU layer */
+      /* MAIN */
       #main-scene {
         position: relative;
         width: 100%;
@@ -96,7 +96,6 @@
         contain: layout style;
       }
 
-      /* RAYS — упрощённые, GPU-ускоренные */
       .ray {
         position: absolute;
         top: 48%;
@@ -125,7 +124,6 @@
         }
       }
 
-      /* GLOW — GPU */
       #glow {
         position: absolute;
         width: 200px;
@@ -237,7 +235,6 @@
         transition: width 0.15s ease-out;
       }
 
-      /* PARTICLES — GPU only */
       .particle {
         position: fixed;
         pointer-events: none;
@@ -526,6 +523,11 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+      .channel-type-badge {
+        font-size: 11px;
+        color: #999;
+        margin-top: 2px;
+      }
       .channel-sub-btn {
         padding: 8px 14px;
         font-size: 13px;
@@ -537,6 +539,9 @@
         cursor: pointer;
         flex-shrink: 0;
         margin-left: 10px;
+      }
+      .channel-sub-btn.bot-btn {
+        background: #9b59b6;
       }
       .channel-sub-btn.done {
         background: #4caf50;
@@ -714,6 +719,9 @@
           CHANNELS = [],
           USER_STATE = null;
 
+        // Трекер нажатых кнопок «Открыть» для ботов
+        const openedBots = new Set();
+
         const PARTICLE_COUNT = 8;
         const CONFETTI_COUNT = 80;
 
@@ -734,7 +742,7 @@
             const json = pako.inflate(new Uint8Array(buf), { to: "string" });
             const parsed = JSON.parse(json);
             tgsRaw[url] = parsed;
-            tgsString[url] = json; // уже строка — не нужен повторный stringify!
+            tgsString[url] = json;
             return parsed;
           } catch (e) {
             tgsRaw[url] = null;
@@ -760,7 +768,7 @@
                 autoplay: true,
                 animationData: data,
               });
-              anim.setSubframe(false); // убирает интерполяцию — меньше расчётов
+              anim.setSubframe(false);
               activeLotties.push(anim);
               return anim;
             } catch (e) {}
@@ -803,7 +811,7 @@
           setTimeout(() => t.classList.remove("show"), ms);
         }
 
-        // ═══ SHAKE — оптимизированный ═══
+        // ═══ SHAKE ═══
         let shakeAmt = 0,
           shakeFrozen = false,
           shakeRaf = null;
@@ -832,11 +840,10 @@
           shakeRaf = requestAnimationFrame(tickShake);
         }
 
-        // ═══ PARTICLES — переиспользование DOM ═══
+        // ═══ PARTICLES ═══
         const particlePool = [];
         const MAX_PARTICLES = 20;
 
-        // Pre-create particles
         for (let i = 0; i < MAX_PARTICLES; i++) {
           const p = document.createElement("div");
           p.className = "particle";
@@ -868,9 +875,8 @@
               background:${PARTICLE_COLORS[used % 3]};
               display:block;
             `;
-            // restart animation
             el.style.animation = "none";
-            el.offsetHeight; // reflow (minimal — single element)
+            el.offsetHeight;
             el.style.animation = "";
 
             setTimeout(() => {
@@ -880,7 +886,7 @@
           }
         }
 
-        // ═══ TAP EFFECTS — переиспользование ═══
+        // ═══ TAP EFFECTS ═══
         const tapPool = [];
         const MAX_TAP_EFFECTS = 4;
         const TAP_TEXTS = ["+1", "⭐", "✨", "💫"];
@@ -916,7 +922,7 @@
           }
         }
 
-        // ═══ ROULETTE — оптимизированная ═══
+        // ═══ ROULETTE ═══
         let winnerPrize = null,
           winnerIndex = 0,
           scrollOffset = 0;
@@ -968,7 +974,6 @@
 
         let lastScroll = -999;
         function updateVisible() {
-          // Замораживаем Lottie которые далеко от центра viewport
           const vpW = document.getElementById("roulette-viewport").offsetWidth;
           const center = scrollOffset + vpW / 2;
           for (const [idx, s] of liveSlots) {
@@ -987,11 +992,8 @@
               }
             }
           }
-          // Двигаем strip целиком через transform (GPU!)
-          // вместо двигания каждого элемента отдельно
           strip.style.transform = `translate3d(${-scrollOffset}px, 0, 0)`;
 
-          // Обновляем состав только при значительном скролле
           if (Math.abs(scrollOffset - lastScroll) < ITEM_STEP * 0.4) return;
           lastScroll = scrollOffset;
 
@@ -1018,7 +1020,6 @@
             const data = cloneTGS(prize.tgs);
             if (data) {
               try {
-                // После создания anim в updateVisible():
                 anim = lottie.loadAnimation({
                   container: sd,
                   renderer: "svg",
@@ -1026,7 +1027,7 @@
                   autoplay: true,
                   animationData: data,
                 });
-                anim.setSubframe(false); // ← добавить эту строку
+                anim.setSubframe(false);
               } catch (e) {
                 sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
               }
@@ -1034,7 +1035,6 @@
               sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
             }
 
-            // Позиция относительно strip (strip двигается целиком)
             item.style.left = 10 + i * ITEM_STEP + "px";
             strip.appendChild(item);
             liveSlots.set(i, { el: item, anim });
@@ -1095,7 +1095,6 @@
 
         // ═══ MODALS ═══
         function showPrizeModal() {
-          // Уничтожаем ВСЕ lottie из рулетки
           for (const [, s] of liveSlots)
             if (s.anim) {
               try {
@@ -1159,13 +1158,36 @@
 
           const list = document.getElementById("channel-list");
           list.innerHTML = "";
+
           CHANNELS.forEach((ch) => {
+            const isBot = ch.type === "bot";
             const li = document.createElement("li");
             li.className = "channel-item";
+
+            const avatarIcon = ch.avatar
+              ? `<img src="${ch.avatar}" loading="lazy">`
+              : isBot
+                ? "🤖"
+                : "📢";
+
+            const typeLabel = isBot ? "Бот" : "Канал";
+            const btnText = isBot ? "Открыть" : "Подписаться";
+            const btnClass = isBot
+              ? "channel-sub-btn bot-btn"
+              : "channel-sub-btn";
+
             li.innerHTML = `
-              <div class="channel-avatar">${ch.avatar ? `<img src="${ch.avatar}" loading="lazy">` : "📢"}</div>
-              <div class="channel-info"><div class="channel-name">${ch.name}</div></div>
-              <button class="channel-sub-btn" data-link="${ch.link}">Подписаться</button>`;
+              <div class="channel-avatar">${avatarIcon}</div>
+              <div class="channel-info">
+                <div class="channel-name">${ch.name}</div>
+                <div class="channel-type-badge">${typeLabel}</div>
+              </div>
+              <button class="${btnClass}"
+                      data-link="${ch.link}"
+                      data-type="${ch.type || "channel"}"
+                      data-id="${ch.id}">
+                ${btnText}
+              </button>`;
             list.appendChild(li);
           });
 
@@ -1173,12 +1195,29 @@
             btn.addEventListener("click", (e) => {
               e.stopPropagation();
               const link = btn.getAttribute("data-link");
+              const type = btn.getAttribute("data-type");
+              const id = btn.getAttribute("data-id");
+
+              // Открываем ссылку
               try {
                 if (link && link.includes("t.me/"))
                   Telegram.WebApp.openTelegramLink(link);
                 else Telegram.WebApp.openLink(link);
               } catch (err) {
                 window.open(link, "_blank");
+              }
+
+              // Для ботов: сразу помечаем как «открыто»
+              if (type === "bot" && !openedBots.has(id)) {
+                openedBots.add(id);
+                btn.textContent = "✓ Открыт";
+                btn.classList.add("done");
+
+                // Отправляем на сервер
+                api("check-subscription", {
+                  action: "mark_bot_opened",
+                  bot_id: id,
+                }).catch(() => {});
               }
             });
           });
@@ -1200,7 +1239,9 @@
             btn.disabled = true;
             btn.querySelector("span").textContent = "Проверяем...";
             try {
-              const res = await api("check-subscription", { action: "check" });
+              const res = await api("check-subscription", {
+                action: "check",
+              });
               if (res.all_subscribed) {
                 document.querySelectorAll(".channel-sub-btn").forEach((b) => {
                   b.textContent = "✓";
@@ -1223,16 +1264,17 @@
                 CHANNELS.forEach((ch, i) => {
                   const b = items[i]?.querySelector(".channel-sub-btn");
                   if (b) {
+                    const isBot = ch.type === "bot";
                     if (res.results[String(ch.id)]) {
                       b.textContent = "✓";
                       b.classList.add("done");
                     } else {
-                      b.textContent = "Подписаться";
+                      b.textContent = isBot ? "Открыть" : "Подписаться";
                       b.classList.remove("done");
                     }
                   }
                 });
-                toast("Подпишитесь на все каналы!");
+                toast("Подпишитесь на все каналы и откройте всех ботов!");
                 try {
                   Telegram.WebApp.HapticFeedback.notificationOccurred("error");
                 } catch (e) {}
@@ -1383,7 +1425,6 @@
 
           if (!USER_STATE || USER_STATE.state === "new") {
             await loadTGS(MAIN_TGS);
-            // На слабых — загружаем TGS только если будем использовать в рулетке
             await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
           } else {
             const prizeUrl = PRIZES.find(
@@ -1501,7 +1542,6 @@
           });
           gsap.to(glowEl, { scale: 3, opacity: 1, duration: 2.5 });
 
-          // Останавливаем CSS-анимации лучей, управляем через GSAP
           document
             .querySelectorAll(".ray")
             .forEach((r) => (r.style.animation = "none"));
