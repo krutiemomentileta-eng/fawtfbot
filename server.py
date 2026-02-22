@@ -5,6 +5,7 @@ import hmac
 import hashlib
 import base64
 from urllib.parse import parse_qs, unquote
+import asyncio
 
 import httpx
 from fastapi import FastAPI, Request
@@ -21,6 +22,257 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
 app = FastAPI()
+
+# ══════════════════════════════════════════════════
+#  BROADCAST STATE
+# ══════════════════════════════════════════════════
+broadcast_status = {
+    "running": False,
+    "total": 0,
+    "sent": 0,
+    "failed": 0,
+    "blocked": 0,
+}
+
+# ══════════════════════════════════════════════════
+#  BROADCAST
+# ══════════════════════════════════════════════════
+async def start_broadcast(admin_cid, msg):
+    """Сохраняем сообщение и просим подтверждение"""
+    # Определяем тип контента
+    content = {}
+    if msg.get("photo"):
+        content["type"] = "photo"
+        content["file_id"] = msg["photo"][-1]["file_id"]
+        content["caption"] = msg.get("caption", "")
+        content["caption_entities"] = msg.get("caption_entities", [])
+    elif msg.get("video"):
+        content["type"] = "video"
+        content["file_id"] = msg["video"]["file_id"]
+        content["caption"] = msg.get("caption", "")
+        content["caption_entities"] = msg.get("caption_entities", [])
+    elif msg.get("animation"):
+        content["type"] = "animation"
+        content["file_id"] = msg["animation"]["file_id"]
+        content["caption"] = msg.get("caption", "")
+        content["caption_entities"] = msg.get("caption_entities", [])
+    elif msg.get("sticker"):
+        content["type"] = "sticker"
+        content["file_id"] = msg["sticker"]["file_id"]
+    elif msg.get("document"):
+        content["type"] = "document"
+        content["file_id"] = msg["document"]["file_id"]
+        content["caption"] = msg.get("caption", "")
+        content["caption_entities"] = msg.get("caption_entities", [])
+    elif msg.get("voice"):
+        content["type"] = "voice"
+        content["file_id"] = msg["voice"]["file_id"]
+        content["caption"] = msg.get("caption", "")
+    elif msg.get("video_note"):
+        content["type"] = "video_note"
+        content["file_id"] = msg["video_note"]["file_id"]
+    else:
+        content["type"] = "text"
+        content["text"] = msg.get("text", "")
+        content["entities"] = msg.get("entities", [])
+
+    # Сохраняем в admin_state как JSON
+    db.update_eq("users", {
+        "admin_state": "broadcast_confirm",
+        "broadcast_data": json.dumps(content),
+    }, "telegram_id", ADMIN_ID)
+
+    users = db.select("users")
+    total = len(users)
+
+    preview_text = ""
+    if content["type"] == "text":
+        preview_text = content["text"][:200]
+    elif content.get("caption"):
+        preview_text = content["caption"][:200]
+
+    await send_msg(admin_cid,
+        f"📨 <b>Подтверждение рассылки</b>\n\n"
+        f"📝 Тип: <b>{content['type']}</b>\n"
+        f"{'📄 Текст: <i>' + preview_text + '</i>' if preview_text else ''}\n\n"
+        f"👥 Получателей: <b>{total}</b>\n\n"
+        f"Отправить?",
+        {"inline_keyboard": [
+            [
+                {"text": "✅ Отправить", "callback_data": "adm_broadcast_go"},
+                {"text": "❌ Отмена", "callback_data": "adm_broadcast_cancel"},
+            ],
+            [{"text": "📨 Тест (только мне)", "callback_data": "adm_broadcast_test"}],
+        ]}
+    )
+
+
+async def do_broadcast(admin_cid):
+    """Выполняет рассылку"""
+    global broadcast_status
+
+    if broadcast_status["running"]:
+        await send_msg(admin_cid, "⚠️ Рассылка уже идёт!")
+        return
+
+    admin = db.select_eq("users", "telegram_id", ADMIN_ID)
+    if not admin:
+        return
+
+    data_raw = admin[0].get("broadcast_data", "")
+    if not data_raw:
+        await send_msg(admin_cid, "❌ Нет данных для рассылки")
+        return
+
+    content = json.loads(data_raw)
+    users = db.select("users")
+
+    broadcast_status = {
+        "running": True,
+        "total": len(users),
+        "sent": 0,
+        "failed": 0,
+        "blocked": 0,
+    }
+
+    # Отправляем стартовое сообщение
+    status_msg = await send_msg(admin_cid,
+        f"🚀 <b>Рассылка запущена!</b>\n\n"
+        f"👥 Всего: {broadcast_status['total']}\n"
+        f"✅ Отправлено: 0\n"
+        f"❌ Ошибок: 0\n"
+        f"🚫 Заблокировали: 0"
+    )
+    status_msg_id = status_msg.get("result", {}).get("message_id") if status_msg.get("ok") else None
+
+    for i, user in enumerate(users):
+        uid = user["telegram_id"]
+        try:
+            ok = await send_broadcast_msg(uid, content)
+            if ok:
+                broadcast_status["sent"] += 1
+            else:
+                broadcast_status["blocked"] += 1
+        except Exception as e:
+            print(f"Broadcast error uid={uid}: {e}")
+            broadcast_status["failed"] += 1
+
+        # Обновляем статус каждые 25 сообщений
+        if status_msg_id and (i + 1) % 25 == 0:
+            await edit_msg(admin_cid, status_msg_id,
+                f"🚀 <b>Рассылка идёт...</b>\n\n"
+                f"👥 Всего: {broadcast_status['total']}\n"
+                f"✅ Отправлено: {broadcast_status['sent']}\n"
+                f"❌ Ошибок: {broadcast_status['failed']}\n"
+                f"🚫 Заблокировали: {broadcast_status['blocked']}\n\n"
+                f"📊 {i + 1}/{broadcast_status['total']}"
+            )
+
+        # Задержка чтобы не упереться в лимит Telegram (30 msg/sec)
+        await asyncio.sleep(0.05)
+
+    broadcast_status["running"] = False
+
+    # Финальный отчёт
+    final_text = (
+        f"✅ <b>Рассылка завершена!</b>\n\n"
+        f"👥 Всего: {broadcast_status['total']}\n"
+        f"✅ Отправлено: {broadcast_status['sent']}\n"
+        f"❌ Ошибок: {broadcast_status['failed']}\n"
+        f"🚫 Заблокировали: {broadcast_status['blocked']}"
+    )
+    if status_msg_id:
+        await edit_msg(admin_cid, status_msg_id, final_text)
+    else:
+        await send_msg(admin_cid, final_text)
+
+    # Чистим данные
+    db.update_eq("users", {
+        "admin_state": "",
+        "broadcast_data": "",
+    }, "telegram_id", ADMIN_ID)
+
+
+async def send_broadcast_msg(chat_id, content):
+    """Отправляет одно сообщение рассылки"""
+    msg_type = content["type"]
+
+    if msg_type == "text":
+        data = {
+            "chat_id": chat_id,
+            "text": content["text"],
+            "entities": content.get("entities", []),
+        }
+        r = await tg("sendMessage", data)
+
+    elif msg_type == "photo":
+        data = {
+            "chat_id": chat_id,
+            "photo": content["file_id"],
+            "caption": content.get("caption", ""),
+            "caption_entities": content.get("caption_entities", []),
+        }
+        r = await tg("sendPhoto", data)
+
+    elif msg_type == "video":
+        data = {
+            "chat_id": chat_id,
+            "video": content["file_id"],
+            "caption": content.get("caption", ""),
+            "caption_entities": content.get("caption_entities", []),
+        }
+        r = await tg("sendVideo", data)
+
+    elif msg_type == "animation":
+        data = {
+            "chat_id": chat_id,
+            "animation": content["file_id"],
+            "caption": content.get("caption", ""),
+            "caption_entities": content.get("caption_entities", []),
+        }
+        r = await tg("sendAnimation", data)
+
+    elif msg_type == "sticker":
+        data = {
+            "chat_id": chat_id,
+            "sticker": content["file_id"],
+        }
+        r = await tg("sendSticker", data)
+
+    elif msg_type == "document":
+        data = {
+            "chat_id": chat_id,
+            "document": content["file_id"],
+            "caption": content.get("caption", ""),
+            "caption_entities": content.get("caption_entities", []),
+        }
+        r = await tg("sendDocument", data)
+
+    elif msg_type == "voice":
+        data = {
+            "chat_id": chat_id,
+            "voice": content["file_id"],
+            "caption": content.get("caption", ""),
+        }
+        r = await tg("sendVoice", data)
+
+    elif msg_type == "video_note":
+        data = {
+            "chat_id": chat_id,
+            "video_note": content["file_id"],
+        }
+        r = await tg("sendVideoNote", data)
+
+    else:
+        return False
+
+    if not r.get("ok"):
+        desc = r.get("description", "")
+        if "blocked" in desc or "deactivated" in desc or "not found" in desc:
+            return False  # Заблокировал бота
+        return False
+
+    return True
 
 # ══════════════════════════════════════════════════
 #  SUPABASE REST CLIENT
@@ -493,6 +745,32 @@ async def handle_message(msg):
             db.update_eq("prizes", {"name": text}, "key", key)
             db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
             await send_msg(cid, f"✅ Приз переименован в: <b>{text}</b>")
+        elif st == "broadcast_text":
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+            await start_broadcast(cid, msg)
+        elif st == "broadcast_confirm":
+            # Не должно сюда попадать, но на всякий случай
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+            await send_msg(cid, "Отменено. /a")
+
+    elif text == "/a" and uid == ADMIN_ID:
+        await show_admin_menu(cid)
+
+    elif uid == ADMIN_ID:
+        user = get_or_create(ADMIN_ID)
+        st = user.get("admin_state", "")
+
+        if st == "add_channel":
+            await process_add_channel(cid, text)
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+        elif st == "add_bot":
+            await process_add_bot(cid, text)
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+        elif st and st.startswith("edit_prize:"):
+            key = st.split(":")[1]
+            db.update_eq("prizes", {"name": text}, "key", key)
+            db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+            await send_msg(cid, f"✅ Приз переименован в: <b>{text}</b>")
 
 async def show_admin_menu(cid, msg_id=None):
     sponsors = get_sponsors()
@@ -514,6 +792,7 @@ async def show_admin_menu(cid, msg_id=None):
         [{"text": f"📢 Каналы ({channels_count})", "callback_data": "adm_channels"}],
         [{"text": f"🤖 Боты ({bots_count})", "callback_data": "adm_bots"}],
         [{"text": f"🎁 Призы ({len(prs)})", "callback_data": "adm_prizes"}],
+        [{"text": "📨 Рассылка", "callback_data": "adm_broadcast"}],
         [{"text": "📊 Статистика", "callback_data": "adm_stats"}],
         [{"text": "🔄 Обновить данные", "callback_data": "adm_refresh"}],
     ]}
@@ -630,6 +909,65 @@ async def handle_callback(cb):
             "⚠️ Бот должен быть администратором!",
             {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_channels"}]]})
 
+
+        # ── РАССЫЛКА ──
+    elif data == "adm_broadcast":
+        if broadcast_status["running"]:
+            await edit_msg(cid, mid,
+                f"⏳ <b>Рассылка уже идёт!</b>\n\n"
+                f"✅ {broadcast_status['sent']}/{broadcast_status['total']}",
+                {"inline_keyboard": [[{"text": "← Назад", "callback_data": "adm_menu"}]]}
+            )
+            return
+
+        db.update_eq("users", {"admin_state": "broadcast_text"}, "telegram_id", ADMIN_ID)
+        await edit_msg(cid, mid,
+            "📨 <b>Рассылка</b>\n\n"
+            "Отправьте сообщение для рассылки.\n\n"
+            "Поддерживается:\n"
+            "• 📝 Текст (с форматированием)\n"
+            "• 🖼 Фото\n"
+            "• 🎬 Видео\n"
+            "• 🎞 GIF\n"
+            "• 📎 Документ\n"
+            "• 🎤 Голосовое\n"
+            "• 🔵 Видеокружок\n"
+            "• 😄 Стикер\n\n"
+            "💡 Форматирование сохраняется!",
+            {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_menu"}]]}
+        )
+
+    elif data == "adm_broadcast_test":
+        admin = db.select_eq("users", "telegram_id", ADMIN_ID)
+        if admin:
+            data_raw = admin[0].get("broadcast_data", "")
+            if data_raw:
+                content = json.loads(data_raw)
+                ok = await send_broadcast_msg(ADMIN_ID, content)
+                if ok:
+                    await send_msg(cid, "✅ Тестовое сообщение отправлено выше ⬆️\n\nОтправить всем?",
+                        {"inline_keyboard": [
+                            [
+                                {"text": "✅ Отправить всем", "callback_data": "adm_broadcast_go"},
+                                {"text": "❌ Отмена", "callback_data": "adm_broadcast_cancel"},
+                            ],
+                        ]}
+                    )
+                else:
+                    await send_msg(cid, "❌ Ошибка отправки тестового сообщения")
+
+    elif data == "adm_broadcast_go":
+        db.update_eq("users", {"admin_state": ""}, "telegram_id", ADMIN_ID)
+        # Запускаем рассылку в фоне
+        asyncio.create_task(do_broadcast(cid))
+
+    elif data == "adm_broadcast_cancel":
+        db.update_eq("users", {
+            "admin_state": "",
+            "broadcast_data": "",
+        }, "telegram_id", ADMIN_ID)
+        await show_admin_menu(cid, mid)
+    
     # ── БОТЫ ──
     elif data == "adm_bots":
         sponsors = get_sponsors()
