@@ -369,6 +369,7 @@
         pointer-events: none;
       }
 
+      /* ══════ MODALS BASE ══════ */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -555,121 +556,65 @@
       /* ══════ FINAL MODAL ══════ */
       .modal-final-box {
         max-width: 360px;
-        padding: 28px 20px 24px;
+        padding: 24px 20px 20px;
       }
-      .final-check {
-        font-size: 44px;
-        margin-bottom: 8px;
-        animation: check-pop 0.5s ease-out;
-      }
-      @keyframes check-pop {
-        0% {
-          transform: scale(0) rotate(-45deg);
-          opacity: 0;
-        }
-        60% {
-          transform: scale(1.2) rotate(5deg);
-        }
-        100% {
-          transform: scale(1) rotate(0);
-          opacity: 1;
-        }
+      .final-check-icon {
+        width: 44px;
+        height: 44px;
+        margin: 0 auto 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
       }
       .final-title {
-        font-size: 16px;
+        font-size: 15px;
         font-weight: 700;
         color: #333;
-        margin-bottom: 4px;
+        margin-bottom: 3px;
         line-height: 1.3;
       }
       .final-sub {
-        font-size: 13px;
+        font-size: 12px;
         color: #999;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
       }
 
-      /* Timer */
+      /* Timer — compact, gray */
       .timer-wrap {
-        background: linear-gradient(135deg, #1a1a2e, #16213e);
-        border-radius: 16px;
-        padding: 18px 16px 14px;
-        margin: 0 0 18px;
-        position: relative;
-        overflow: hidden;
-      }
-      .timer-wrap::before {
-        content: "";
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(
-          circle,
-          rgba(255, 215, 0, 0.06) 0%,
-          transparent 60%
-        );
-        animation: timer-glow 4s ease-in-out infinite;
-      }
-      @keyframes timer-glow {
-        0%,
-        100% {
-          transform: translate(0, 0);
-        }
-        50% {
-          transform: translate(5%, 5%);
-        }
-      }
-      .timer-label {
-        color: rgba(255, 255, 255, 0.6);
-        font-size: 11px;
-        font-weight: 600;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-        margin-bottom: 8px;
+        background: #f0f0f0;
+        border-radius: 12px;
+        padding: 10px 16px;
+        margin: 0 0 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
       }
       .timer-display {
         font-family: "Courier New", Consolas, monospace;
-        font-size: 40px;
+        font-size: 24px;
         font-weight: 900;
-        color: #ffd700;
-        text-shadow:
-          0 0 20px rgba(255, 215, 0, 0.4),
-          0 0 40px rgba(255, 215, 0, 0.15);
-        letter-spacing: 3px;
+        color: #333;
+        letter-spacing: 2px;
         line-height: 1;
-        animation: timer-tick 1s ease-in-out infinite;
-      }
-      @keyframes timer-tick {
-        0%,
-        100% {
-          text-shadow:
-            0 0 20px rgba(255, 215, 0, 0.4),
-            0 0 40px rgba(255, 215, 0, 0.15);
-        }
-        50% {
-          text-shadow:
-            0 0 25px rgba(255, 215, 0, 0.6),
-            0 0 50px rgba(255, 215, 0, 0.25);
-        }
       }
       .timer-done {
         color: #4caf50 !important;
-        text-shadow: 0 0 20px rgba(76, 175, 80, 0.4) !important;
-        animation: none !important;
-        font-size: 22px !important;
-        padding: 8px 0;
+        font-size: 16px !important;
+        letter-spacing: 0 !important;
       }
       .speed-badge {
-        display: inline-block;
+        display: flex;
+        align-items: center;
+        gap: 3px;
         background: linear-gradient(135deg, #ffd700, #ffa500);
-        color: #1a1a2e;
+        color: #333;
         font-weight: 800;
-        padding: 4px 14px;
+        padding: 4px 10px;
         border-radius: 20px;
-        font-size: 13px;
-        margin-top: 10px;
-        letter-spacing: 0.5px;
+        font-size: 12px;
+        white-space: nowrap;
       }
       .speed-badge.fast {
         animation: badge-pulse 1s ease-in-out infinite;
@@ -683,8 +628,17 @@
           transform: scale(1.08);
         }
       }
+      .badge-icon {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        flex-shrink: 0;
+      }
 
-      /* Final action buttons */
+      /* Action buttons */
       .final-actions {
         display: flex;
         gap: 10px;
@@ -700,9 +654,12 @@
         border-radius: 14px;
         cursor: pointer;
         transition: transform 0.1s;
-        position: relative;
         overflow: hidden;
         line-height: 1.3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
       }
       .btn-action:active {
         transform: scale(0.95);
@@ -716,28 +673,48 @@
         box-shadow: 0 4px 15px rgba(241, 39, 17, 0.2);
       }
       .btn-action-icon {
-        font-size: 20px;
-        display: block;
-        margin-bottom: 4px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
       }
 
       /* ══════ SPEEDUP MODAL ══════ */
       .modal-speedup-box {
         max-width: 360px;
-        padding: 28px 20px 24px;
+        padding: 24px 20px 20px;
+      }
+      .speedup-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      .header-icon {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        flex-shrink: 0;
       }
       .speedup-title {
         font-size: 18px;
         font-weight: 800;
         color: #333;
-        margin-bottom: 6px;
       }
       .speedup-desc {
         font-size: 13px;
         color: #888;
         line-height: 1.5;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
       }
+
       .speedup-current {
         display: flex;
         align-items: center;
@@ -771,16 +748,15 @@
         background: #e0e0e0;
       }
 
-      /* Progress track */
       .ref-progress {
-        margin-bottom: 24px;
+        margin-bottom: 20px;
       }
       .ref-track {
         position: relative;
         height: 8px;
         background: #e8e8e8;
         border-radius: 4px;
-        margin: 0 4px 30px;
+        margin: 10px 14px 52px;
       }
       .ref-fill {
         position: absolute;
@@ -801,18 +777,15 @@
         border: 3px solid #fff;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
         transform: translateX(-50%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0;
         transition: background 0.3s;
+        z-index: 2;
       }
       .ref-milestone.reached {
         background: linear-gradient(135deg, #ffd700, #ffa500);
       }
       .ref-milestone-info {
         position: absolute;
-        top: 20px;
+        top: 24px;
         left: 50%;
         transform: translateX(-50%);
         text-align: center;
@@ -825,7 +798,7 @@
       }
       .ref-milestone-speed {
         font-size: 10px;
-        color: #999;
+        color: #aaa;
         font-weight: 600;
       }
       .ref-milestone.reached .ref-milestone-count {
@@ -837,7 +810,7 @@
 
       .btn-share {
         width: 100%;
-        padding: 15px;
+        padding: 14px;
         font-size: 15px;
         font-weight: 700;
         color: #fff;
@@ -855,10 +828,19 @@
       .btn-share:active {
         transform: scale(0.95);
       }
+      .share-icon {
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+      }
       .ref-hint {
         font-size: 12px;
         color: #aaa;
-        margin-top: 12px;
+        margin-top: 10px;
         line-height: 1.4;
       }
       .btn-back-small {
@@ -868,11 +850,11 @@
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        margin-top: 14px;
+        margin-top: 12px;
         padding: 8px;
       }
 
-      /* ══════ STARS MODAL (fullscreen) ══════ */
+      /* ══════ STARS FULLSCREEN ══════ */
       .modal-fs {
         position: fixed;
         top: 0;
@@ -896,6 +878,18 @@
         font-size: 17px;
         font-weight: 700;
         color: #333;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .header-icon-inline {
+        width: 22px;
+        height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 17px;
+        flex-shrink: 0;
       }
       .modal-fs-close {
         width: 32px;
@@ -1040,7 +1034,6 @@
       </div>
     </div>
 
-    <!-- Prize reveal -->
     <div id="modal-prize" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>ВАМ ВЫПАЛ:</h2>
@@ -1052,7 +1045,6 @@
       </div>
     </div>
 
-    <!-- Subscribe -->
     <div id="modal-subscribe" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>🎁 Получите приз!</h2>
@@ -1068,27 +1060,29 @@
       </div>
     </div>
 
-    <!-- FINAL — redesigned -->
+    <!-- FINAL -->
     <div id="modal-final" class="modal-overlay hidden">
       <div class="modal-box modal-final-box">
-        <div class="final-check">✅</div>
+        <div id="icon-check" class="final-check-icon"></div>
         <div id="final-sticker" class="modal-sticker"></div>
         <p id="final-prize-name" class="modal-prize-name"></p>
         <div class="final-title">ЗАЯВКА НА ВЫВОД ПРИЗА ОТПРАВЛЕНА!</div>
         <div class="final-sub">Ожидайте — приз будет выдан автоматически</div>
-
         <div class="timer-wrap">
-          <div class="timer-label">До вывода приза осталось</div>
           <div id="timer-display" class="timer-display">24:00:00</div>
-          <div id="speed-badge" class="speed-badge">⚡ x1</div>
+          <div id="speed-badge" class="speed-badge">
+            <div id="icon-lightning" class="badge-icon"></div>
+            <span id="speed-text">x1</span>
+          </div>
         </div>
-
         <div class="final-actions">
           <button id="btn-speedup" class="btn-action btn-speedup">
-            <span class="btn-action-icon">🚀</span>Ускорить вывод
+            <div id="icon-rocket-btn" class="btn-action-icon"></div>
+            <span>Ускорить вывод</span>
           </button>
           <button id="btn-earn-stars" class="btn-action btn-earn-stars">
-            <span class="btn-action-icon">⭐</span>Заработать звёзды
+            <div id="icon-star-btn" class="btn-action-icon"></div>
+            <span>Заработать звёзды</span>
           </button>
         </div>
       </div>
@@ -1097,12 +1091,14 @@
     <!-- SPEEDUP -->
     <div id="modal-speedup" class="modal-overlay hidden">
       <div class="modal-box modal-speedup-box">
-        <h2>🚀 Ускорить вывод</h2>
+        <div class="speedup-header">
+          <div id="icon-rocket-title" class="header-icon"></div>
+          <div class="speedup-title">Ускорить вывод</div>
+        </div>
         <p class="speedup-desc">
           Пригласи друзей — каждые 2 друга ускоряют таймер вдвое! Друг
           засчитывается когда получит свой подарок.
         </p>
-
         <div class="speedup-current">
           <div class="speedup-stat">
             <div id="su-ref-count" class="speedup-stat-val">0</div>
@@ -1114,7 +1110,6 @@
             <div class="speedup-stat-label">Скорость</div>
           </div>
         </div>
-
         <div class="ref-progress">
           <div class="ref-track">
             <div id="ref-fill" class="ref-fill" style="width: 0%"></div>
@@ -1144,8 +1139,10 @@
             </div>
           </div>
         </div>
-
-        <button id="btn-share" class="btn-share">📤 Пригласить друга</button>
+        <button id="btn-share" class="btn-share">
+          <div id="icon-invite" class="share-icon"></div>
+          <span>Пригласить друга</span>
+        </button>
         <p class="ref-hint">
           Ваша реферальная ссылка будет прикреплена автоматически
         </p>
@@ -1153,10 +1150,13 @@
       </div>
     </div>
 
-    <!-- STARS (fullscreen) -->
+    <!-- STARS -->
     <div id="modal-stars" class="modal-fs hidden">
       <div class="modal-fs-header">
-        <span class="modal-fs-title">⭐ Заработать звёзды</span>
+        <span class="modal-fs-title">
+          <span id="icon-star-title" class="header-icon-inline"></span>
+          Заработать звёзды
+        </span>
         <button id="btn-close-stars" class="modal-fs-close">✕</button>
       </div>
       <div id="stars-content" class="modal-fs-body"></div>
@@ -1189,117 +1189,122 @@
 
     <script>
       window.addEventListener("load", () => {
-        const check = setInterval(() => {
+        const ck = setInterval(() => {
           if (
             typeof gsap !== "undefined" &&
             typeof confetti !== "undefined" &&
             typeof lottie !== "undefined" &&
             typeof pako !== "undefined"
           ) {
-            clearInterval(check);
+            clearInterval(ck);
             startApp();
           }
         }, 30);
       });
 
       function startApp() {
-        const API_BASE = "/api";
-        const MAIN_TGS = "assets/gift.tgs",
+        const API = "/api",
+          MAIN_TGS = "assets/gift.tgs",
           MAIN_EMOJI = "🎁";
         const MAX_TAPS = 10,
-          ROULETTE_TOTAL = 70;
-        const ITEM_W = 96,
-          ITEM_GAP = 10,
-          ITEM_STEP = 106;
-        const PARTICLE_COUNT = 8,
-          CONFETTI_COUNT = 80;
-        const BOT_USERNAME = "fawtfbot";
-        const TOTAL_SECONDS = 86400;
+          R_TOTAL = 70,
+          IW = 96,
+          ISTEP = 106;
+        const P_COUNT = 8,
+          C_COUNT = 80,
+          BOT = "fawtfbot",
+          T_SEC = 86400;
+
+        // Icon TGS paths
+        const IC = {
+          rocket: "assets/rocket.tgs",
+          star: "assets/star.tgs",
+          lightning: "assets/lightning.tgs",
+          check: "assets/true.tgs",
+          invite: "assets/invite.tgs",
+        };
 
         let PRIZES = [],
           CHANNELS = [],
-          USER_STATE = null;
+          US = null;
         const openedBots = new Set();
-
-        // ═══ Timer state ═══
-        let claimedAtUnix = null,
+        let claimedAt = null,
           refCount = 0,
-          timerSpeed = 1,
-          timerInterval = null,
+          tSpeed = 1,
+          tInt = null,
           isAdmin = false;
 
         function calcSpeed(r) {
           return r >= 2 ? Math.pow(2, Math.floor(r / 2)) : 1;
         }
-
-        function fmtTime(sec) {
-          if (sec <= 0) return null;
-          const h = Math.floor(sec / 3600),
-            m = Math.floor((sec % 3600) / 60),
-            s = Math.floor(sec % 60);
-          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        function fmtT(s) {
+          if (s <= 0) return null;
+          const h = Math.floor(s / 3600),
+            m = Math.floor((s % 3600) / 60),
+            sc = Math.floor(s % 60);
+          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sc).padStart(2, "0")}`;
         }
 
         function startTimer() {
-          if (timerInterval) clearInterval(timerInterval);
-          updateTimerDisplay();
-          timerInterval = setInterval(updateTimerDisplay, 500);
+          if (tInt) clearInterval(tInt);
+          updTimer();
+          tInt = setInterval(updTimer, 500);
         }
-
-        function updateTimerDisplay() {
-          if (!claimedAtUnix) return;
-          const now = Date.now() / 1000;
-          const elapsed = now - claimedAtUnix;
-          const effective = elapsed * timerSpeed;
-          const remaining = Math.max(0, TOTAL_SECONDS - effective);
-          const el = document.getElementById("timer-display");
-          const badge = document.getElementById("speed-badge");
+        function updTimer() {
+          if (!claimedAt) return;
+          const el = document.getElementById("timer-display"),
+            bg = document.getElementById("speed-badge");
           if (!el) return;
-
-          const t = fmtTime(remaining);
+          const rem = Math.max(
+            0,
+            T_SEC - (Date.now() / 1000 - claimedAt) * tSpeed,
+          );
+          const t = fmtT(rem);
           if (!t) {
-            el.textContent = "✅ ГОТОВО!";
+            el.textContent = "ГОТОВО!";
             el.classList.add("timer-done");
-            badge.style.display = "none";
-            clearInterval(timerInterval);
+            if (bg) bg.style.display = "none";
+            clearInterval(tInt);
             return;
           }
           el.textContent = t;
           el.classList.remove("timer-done");
-          badge.style.display = "";
-          badge.textContent = `⚡ x${timerSpeed}`;
-          if (timerSpeed > 1) badge.classList.add("fast");
-          else badge.classList.remove("fast");
+          if (bg) {
+            bg.style.display = "";
+            document.getElementById("speed-text").textContent = "x" + tSpeed;
+            if (tSpeed > 1) bg.classList.add("fast");
+            else bg.classList.remove("fast");
+          }
         }
 
         // ═══ TGS ═══
-        const tgsRaw = {},
-          tgsString = {};
+        const tgsR = {},
+          tgsS = {};
         try {
           lottie.setQuality(2);
         } catch (e) {}
 
-        async function loadTGS(url) {
-          if (tgsRaw[url] !== undefined) return tgsRaw[url];
+        async function loadTGS(u) {
+          if (tgsR[u] !== undefined) return tgsR[u];
           try {
-            const r = await fetch(url);
+            const r = await fetch(u);
             if (!r.ok) throw 0;
-            const buf = await r.arrayBuffer();
-            const json = pako.inflate(new Uint8Array(buf), { to: "string" });
-            const p = JSON.parse(json);
-            tgsRaw[url] = p;
-            tgsString[url] = json;
+            const b = await r.arrayBuffer();
+            const j = pako.inflate(new Uint8Array(b), { to: "string" });
+            const p = JSON.parse(j);
+            tgsR[u] = p;
+            tgsS[u] = j;
             return p;
           } catch (e) {
-            tgsRaw[url] = null;
+            tgsR[u] = null;
             return null;
           }
         }
         function cloneTGS(u) {
-          return tgsString[u] ? JSON.parse(tgsString[u]) : null;
+          return tgsS[u] ? JSON.parse(tgsS[u]) : null;
         }
 
-        let activeLotties = [];
+        let aLot = [];
         function playLottie(c, u, em) {
           c.innerHTML = "";
           const d = cloneTGS(u);
@@ -1313,24 +1318,64 @@
                 animationData: d,
               });
               a.setSubframe(false);
-              activeLotties.push(a);
+              aLot.push(a);
               return a;
             } catch (e) {}
           }
           c.textContent = em || "🎁";
           return null;
         }
-        function killAllLotties() {
-          activeLotties.forEach((a) => {
+        function killLotties() {
+          aLot.forEach((a) => {
             try {
               a.destroy();
             } catch (e) {}
           });
-          activeLotties = [];
+          aLot = [];
+        }
+
+        // Icons — separate from activeLotties, never destroyed
+        function playIcon(c, u, em) {
+          if (!c || c.dataset.ic) return;
+          c.dataset.ic = "1";
+          c.innerHTML = "";
+          const d = cloneTGS(u);
+          if (d) {
+            try {
+              const a = lottie.loadAnimation({
+                container: c,
+                renderer: "svg",
+                loop: true,
+                autoplay: true,
+                animationData: d,
+              });
+              a.setSubframe(false);
+              return;
+            } catch (e) {}
+          }
+          c.textContent = em || "";
+        }
+
+        function initIcons() {
+          playIcon(document.getElementById("icon-check"), IC.check, "✅");
+          playIcon(
+            document.getElementById("icon-lightning"),
+            IC.lightning,
+            "⚡",
+          );
+          playIcon(document.getElementById("icon-rocket-btn"), IC.rocket, "🚀");
+          playIcon(document.getElementById("icon-star-btn"), IC.star, "⭐");
+          playIcon(
+            document.getElementById("icon-rocket-title"),
+            IC.rocket,
+            "🚀",
+          );
+          playIcon(document.getElementById("icon-invite"), IC.invite, "📤");
+          playIcon(document.getElementById("icon-star-title"), IC.star, "⭐");
         }
 
         // ═══ API ═══
-        function getInitData() {
+        function gID() {
           try {
             return Telegram.WebApp.initData;
           } catch (e) {
@@ -1338,65 +1383,65 @@
           }
         }
         async function api(ep, body = {}) {
-          const r = await fetch(`${API_BASE}/${ep}`, {
+          const r = await fetch(`${API}/${ep}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ initData: getInitData(), ...body }),
+            body: JSON.stringify({ initData: gID(), ...body }),
           });
           return r.json();
         }
-        function toast(t, type = "error", ms = 3000) {
+        function toast(t, tp = "error", ms = 3000) {
           const el = document.getElementById("toast");
           el.textContent = t;
-          el.className = "toast " + type;
+          el.className = "toast " + tp;
           requestAnimationFrame(() => el.classList.add("show"));
           setTimeout(() => el.classList.remove("show"), ms);
         }
 
         // ═══ Shake ═══
-        let shakeAmt = 0,
-          shakeFrozen = false,
-          shakeRaf = null;
-        const mainScene = document.getElementById("main-scene");
-        function addShake(a) {
-          shakeAmt = Math.min(shakeAmt + a, 45);
-          if (!shakeRaf) tickShake();
+        let shA = 0,
+          shF = false,
+          shR = null;
+        const mS = document.getElementById("main-scene");
+        function addSh(a) {
+          shA = Math.min(shA + a, 45);
+          if (!shR) tSh();
         }
-        function freezeShake(a, ms) {
-          shakeAmt = a;
-          shakeFrozen = true;
-          if (!shakeRaf) tickShake();
-          setTimeout(() => (shakeFrozen = false), ms);
+        function frSh(a, ms) {
+          shA = a;
+          shF = true;
+          if (!shR) tSh();
+          setTimeout(() => (shF = false), ms);
         }
-        function tickShake() {
-          if (shakeAmt < 0.5 && !shakeFrozen) {
-            mainScene.style.transform = "";
-            shakeRaf = null;
+        function tSh() {
+          if (shA < 0.5 && !shF) {
+            mS.style.transform = "";
+            shR = null;
             return;
           }
-          const x = ((Math.random() - 0.5) * shakeAmt * 2) | 0,
-            y = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
-          mainScene.style.transform = `translate3d(${x}px,${y}px,0)`;
-          if (!shakeFrozen) shakeAmt *= 0.85;
-          shakeRaf = requestAnimationFrame(tickShake);
+          const x = ((Math.random() - 0.5) * shA * 2) | 0,
+            y = ((Math.random() - 0.5) * shA * 2) | 0;
+          mS.style.transform = `translate3d(${x}px,${y}px,0)`;
+          if (!shF) shA *= 0.85;
+          shR = requestAnimationFrame(tSh);
         }
 
         // ═══ Particles ═══
-        const particlePool = [],
-          MAX_PARTICLES = 20,
-          PCOL = ["#FFD700", "#FFA500", "#FF6B6B"];
-        for (let i = 0; i < MAX_PARTICLES; i++) {
+        const pP = [],
+          MP = 20,
+          PC = ["#FFD700", "#FFA500", "#FF6B6B"];
+        for (let i = 0; i < MP; i++) {
           const p = document.createElement("div");
           p.className = "particle";
           p.style.display = "none";
           document.body.appendChild(p);
-          particlePool.push({ el: p, busy: false });
+          pP.push({ el: p, busy: false });
         }
-        function burstCSS(x, y, n) {
-          n = Math.min(n, PARTICLE_COUNT);
+        function burst(x, y, n) {
+          n = Math.min(n, P_COUNT);
           let u = 0;
-          for (let i = 0; i < particlePool.length && u < n; i++) {
-            const s = particlePool[i];
+          for (let i = 0; i < pP.length && u < n; i++) {
+            const s = pP[i];
             if (s.busy) continue;
             s.busy = true;
             u++;
@@ -1404,7 +1449,7 @@
               d = 25 + Math.random() * 35,
               sz = 3 + Math.random() * 3,
               el = s.el;
-            el.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;background:${PCOL[u % 3]};display:block`;
+            el.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;background:${PC[u % 3]};display:block`;
             el.style.animation = "none";
             el.offsetHeight;
             el.style.animation = "";
@@ -1415,24 +1460,23 @@
           }
         }
 
-        // ═══ Tap effects ═══
-        const tapPool = [],
-          MAX_TAP = 4,
-          TAP_T = ["+1", "⭐", "✨", "💫"];
-        for (let i = 0; i < MAX_TAP; i++) {
+        const tP = [],
+          MT = 4,
+          TT = ["+1", "⭐", "✨", "💫"];
+        for (let i = 0; i < MT; i++) {
           const el = document.createElement("div");
           el.className = "tap-effect";
           el.style.display = "none";
           document.body.appendChild(el);
-          tapPool.push({ el, busy: false });
+          tP.push({ el, busy: false });
         }
-        function showTapEffect(x, y) {
-          for (let i = 0; i < tapPool.length; i++) {
-            const s = tapPool[i];
+        function showTE(x, y) {
+          for (let i = 0; i < tP.length; i++) {
+            const s = tP[i];
             if (s.busy) continue;
             s.busy = true;
             const el = s.el;
-            el.textContent = TAP_T[~~(Math.random() * 4)];
+            el.textContent = TT[~~(Math.random() * 4)];
             el.style.left = x + (Math.random() - 0.5) * 30 + "px";
             el.style.top = y - 10 + "px";
             el.style.display = "block";
@@ -1448,16 +1492,15 @@
         }
 
         // ═══ Roulette ═══
-        let winnerPrize = null,
-          winnerIndex = 0,
-          scrollOffset = 0;
-        const liveSlots = new Map(),
-          slotPrizes = [];
-        const strip = document.getElementById("roulette-strip");
-        const itemPool = [];
-
-        function getPoolItem() {
-          if (itemPool.length) return itemPool.pop();
+        let wP = null,
+          wI = 0,
+          sO = 0;
+        const lS = new Map(),
+          sP = [];
+        const strip = document.getElementById("roulette-strip"),
+          iPool = [];
+        function gPI() {
+          if (iPool.length) return iPool.pop();
           const it = document.createElement("div");
           it.className = "roulette-item";
           const sd = document.createElement("div");
@@ -1465,7 +1508,7 @@
           it.appendChild(sd);
           return it;
         }
-        function returnPool(it, an) {
+        function rPI(it, an) {
           if (an)
             try {
               an.destroy();
@@ -1475,33 +1518,31 @@
           it.style.boxShadow = "";
           it.style.transform = "";
           strip.removeChild(it);
-          itemPool.push(it);
+          iPool.push(it);
         }
 
-        function initRoulette() {
-          for (const [, s] of liveSlots) returnPool(s.el, s.anim);
-          liveSlots.clear();
-          scrollOffset = 0;
-          slotPrizes.length = 0;
-          winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
-          const fk = USER_STATE?.forced_prize;
-          winnerPrize =
+        function initR() {
+          for (const [, s] of lS) rPI(s.el, s.anim);
+          lS.clear();
+          sO = 0;
+          sP.length = 0;
+          wI = R_TOTAL - Math.floor(Math.random() * 5) - 8;
+          const fk = US?.forced_prize;
+          wP =
             (fk && PRIZES.find((p) => p.key === fk)) ||
             PRIZES[Math.floor(Math.random() * PRIZES.length)];
-          for (let i = 0; i < ROULETTE_TOTAL; i++)
-            slotPrizes[i] =
-              i === winnerIndex ? winnerPrize : PRIZES[i % PRIZES.length];
+          for (let i = 0; i < R_TOTAL; i++)
+            sP[i] = i === wI ? wP : PRIZES[i % PRIZES.length];
         }
 
-        let lastScroll = -999;
-        function updateVisible() {
-          const vpW = document.getElementById("roulette-viewport").offsetWidth;
-          const center = scrollOffset + vpW / 2;
-          for (const [idx, s] of liveSlots) {
+        let lScr = -999;
+        function updV() {
+          const vW = document.getElementById("roulette-viewport").offsetWidth,
+            ctr = sO + vW / 2;
+          for (const [idx, s] of lS) {
             if (!s.anim) continue;
-            const ic = 10 + idx * ITEM_STEP + ITEM_W / 2;
-            const d = Math.abs(ic - center);
-            if (d > vpW * 0.6) {
+            const ic = 10 + idx * ISTEP + IW / 2;
+            if (Math.abs(ic - ctr) > vW * 0.6) {
               if (!s.paused) {
                 s.anim.pause();
                 s.paused = true;
@@ -1513,75 +1554,71 @@
               }
             }
           }
-          strip.style.transform = `translate3d(${-scrollOffset}px,0,0)`;
-          if (Math.abs(scrollOffset - lastScroll) < ITEM_STEP * 0.4) return;
-          lastScroll = scrollOffset;
-          const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP),
-            last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
-          const vMin = Math.max(0, first),
-            vMax = Math.min(ROULETTE_TOTAL - 1, last);
-          for (const [idx, s] of liveSlots) {
-            if (idx < vMin || idx > vMax) {
-              returnPool(s.el, s.anim);
-              liveSlots.delete(idx);
+          strip.style.transform = `translate3d(${-sO}px,0,0)`;
+          if (Math.abs(sO - lScr) < ISTEP * 0.4) return;
+          lScr = sO;
+          const f = Math.floor((sO - 10 - IW) / ISTEP),
+            l = Math.ceil((sO + vW + 10) / ISTEP);
+          const vMn = Math.max(0, f),
+            vMx = Math.min(R_TOTAL - 1, l);
+          for (const [idx, s] of lS) {
+            if (idx < vMn || idx > vMx) {
+              rPI(s.el, s.anim);
+              lS.delete(idx);
             }
           }
-          for (let i = vMin; i <= vMax; i++) {
-            if (liveSlots.has(i)) continue;
-            const prize = slotPrizes[i];
-            const item = getPoolItem();
-            const sd = item.firstChild;
+          for (let i = vMn; i <= vMx; i++) {
+            if (lS.has(i)) continue;
+            const pr = sP[i];
+            const it = gPI();
+            const sd = it.firstChild;
             sd.innerHTML = "";
-            let anim = null;
-            const data = cloneTGS(prize.tgs);
-            if (data) {
+            let an = null;
+            const d = cloneTGS(pr.tgs);
+            if (d) {
               try {
-                anim = lottie.loadAnimation({
+                an = lottie.loadAnimation({
                   container: sd,
                   renderer: "svg",
                   loop: true,
                   autoplay: true,
-                  animationData: data,
+                  animationData: d,
                 });
-                anim.setSubframe(false);
+                an.setSubframe(false);
               } catch (e) {
-                sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
+                sd.innerHTML = `<div class="roulette-emoji">${pr.emoji || "🎁"}</div>`;
               }
             } else {
-              sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
+              sd.innerHTML = `<div class="roulette-emoji">${pr.emoji || "🎁"}</div>`;
             }
-            item.style.left = 10 + i * ITEM_STEP + "px";
-            strip.appendChild(item);
-            liveSlots.set(i, { el: item, anim });
+            it.style.left = 10 + i * ISTEP + "px";
+            strip.appendChild(it);
+            lS.set(i, { el: it, anim: an });
           }
         }
 
-        function spinRoulette() {
-          const vpW = document.getElementById("roulette-viewport").offsetWidth;
-          const target =
-            10 +
-            winnerIndex * ITEM_STEP +
-            ITEM_W / 2 -
-            vpW / 2 +
-            (Math.random() - 0.5) * 15;
+        function spinR() {
+          const vW = document.getElementById("roulette-viewport").offsetWidth;
+          const tgt =
+            10 + wI * ISTEP + IW / 2 - vW / 2 + (Math.random() - 0.5) * 15;
           const obj = { val: 0 };
           gsap.to(obj, {
-            val: target,
+            val: tgt,
             duration: 12,
             ease: "power4.out",
             onUpdate() {
-              scrollOffset = obj.val;
-              updateVisible();
+              sO = obj.val;
+              updV();
             },
-            onComplete: onStop,
+            onComplete: onStp,
           });
-          updateVisible();
+          updV();
         }
 
-        function onStop() {
-          lastScroll = -999;
-          updateVisible();
-          const s = liveSlots.get(winnerIndex);
+        function onStp() {
+          lScr = -999;
+          updV();
+          const s = lS.get(wI);
           if (s) {
             s.el.style.borderColor = "#FFD700";
             s.el.style.boxShadow = "0 0 25px rgba(255,215,0,.5)";
@@ -1594,74 +1631,87 @@
           }
           document.getElementById("roulette-title").textContent =
             "🎉 Поздравляем!";
-          confetti({
-            particleCount: CONFETTI_COUNT,
-            spread: 80,
-            origin: { y: 0.5 },
-          });
+          confetti({ particleCount: C_COUNT, spread: 80, origin: { y: 0.5 } });
           api("check-subscription", {
             action: "save_roll",
-            prize_key: winnerPrize.key,
-            prize_name: winnerPrize.name,
+            prize_key: wP.key,
+            prize_name: wP.name,
           }).catch(() => {});
-          setTimeout(showPrizeModal, 1000);
+          setTimeout(showPrize, 1000);
         }
 
-        // ═══ Modals ═══
-        function showPrizeModal() {
-          for (const [, s] of liveSlots)
+        // ═══ Helper: open modal safely ═══
+        function openModal(ovId, boxSel) {
+          const ov = document.getElementById(ovId);
+          const box = ov.querySelector(boxSel || ".modal-box");
+          if (box) {
+            gsap.set(box, { scale: 1, opacity: 1, y: 0 });
+            gsap.from(box, {
+              scale: 0.5,
+              y: 30,
+              opacity: 0,
+              duration: 0.4,
+              ease: "back.out(1.7)",
+            });
+          }
+          ov.classList.remove("hidden");
+          return ov;
+        }
+        function closeModal(ovId, boxSel, cb) {
+          const ov = document.getElementById(ovId);
+          const box = ov.querySelector(boxSel || ".modal-box");
+          if (box) {
+            gsap.to(box, {
+              scale: 0,
+              opacity: 0,
+              duration: 0.25,
+              onComplete() {
+                ov.classList.add("hidden");
+                gsap.set(box, { scale: 1, opacity: 1 });
+                if (cb) cb();
+              },
+            });
+          } else {
+            ov.classList.add("hidden");
+            if (cb) cb();
+          }
+        }
+
+        // ═══ Prize modal ═══
+        function showPrize() {
+          for (const [, s] of lS)
             if (s.anim) {
               try {
                 s.anim.destroy();
                 s.anim = null;
               } catch (e) {}
             }
-          killAllLotties();
-          const ov = document.getElementById("modal-prize");
-          document.getElementById("modal-prize-name").textContent =
-            winnerPrize.name;
+          killLotties();
+          document.getElementById("modal-prize-name").textContent = wP.name;
           playLottie(
             document.getElementById("modal-prize-sticker"),
-            winnerPrize.tgs,
-            winnerPrize.emoji,
+            wP.tgs,
+            wP.emoji,
           );
-          ov.classList.remove("hidden");
-          gsap.from(ov.querySelector(".modal-box"), {
-            scale: 0.5,
-            y: 30,
-            opacity: 0,
-            duration: 0.4,
-            ease: "back.out(1.7)",
-          });
+          openModal("modal-prize");
           confetti({ particleCount: 60, spread: 60, origin: { y: 0.5 } });
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
-          const ov = document.getElementById("modal-prize");
-          gsap.to(ov.querySelector(".modal-box"), {
-            scale: 0,
-            opacity: 0,
-            duration: 0.25,
-            onComplete() {
-              ov.classList.add("hidden");
-              showSubModal();
-            },
-          });
+          closeModal("modal-prize", ".modal-box", showSub);
         });
 
-        function showSubModal() {
-          killAllLotties();
-          const ov = document.getElementById("modal-subscribe");
-          const pN = winnerPrize
-            ? winnerPrize.name
-            : USER_STATE?.prize_name || "Приз";
+        // ═══ Subscribe modal ═══
+        function showSub() {
+          killLotties();
+          const pN = wP ? wP.name : US?.prize_name || "Приз";
           document.getElementById("sub-prize-name").textContent = pN;
-          const tU = winnerPrize
-            ? winnerPrize.tgs
-            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-          const em = winnerPrize
-            ? winnerPrize.emoji
-            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
+          const tU = wP
+            ? wP.tgs
+            : PRIZES.find((p) => p.key === US?.prize_key)?.tgs;
+          const em = wP
+            ? wP.emoji
+            : PRIZES.find((p) => p.key === US?.prize_key)?.emoji;
           if (tU) playLottie(document.getElementById("sub-sticker"), tU, em);
           const list = document.getElementById("channel-list");
           list.innerHTML = "";
@@ -1701,14 +1751,7 @@
               }
             });
           });
-          ov.classList.remove("hidden");
-          gsap.from(ov.querySelector(".modal-box"), {
-            scale: 0.5,
-            y: 30,
-            opacity: 0,
-            duration: 0.4,
-            ease: "back.out(1.7)",
-          });
+          openModal("modal-subscribe");
         }
 
         document
@@ -1726,29 +1769,20 @@
                 });
                 toast("Подписки подтверждены!", "success");
                 refCount = res.referral_count || 0;
-                timerSpeed = calcSpeed(refCount);
+                tSpeed = calcSpeed(refCount);
                 await sleep(800);
-                const ov = document.getElementById("modal-subscribe");
-                gsap.to(ov.querySelector(".modal-box"), {
-                  scale: 0,
-                  opacity: 0,
-                  duration: 0.25,
-                  onComplete() {
-                    ov.classList.add("hidden");
-                    showFinalModal();
-                  },
-                });
+                closeModal("modal-subscribe", ".modal-box", showFinal);
               } else {
                 const items = document.querySelectorAll(".channel-item");
                 CHANNELS.forEach((ch, i) => {
                   const b = items[i]?.querySelector(".channel-sub-btn");
                   if (b) {
-                    const isBot = ch.type === "bot";
+                    const isB = ch.type === "bot";
                     if (res.results[String(ch.id)]) {
                       b.textContent = "✓";
                       b.classList.add("done");
                     } else {
-                      b.textContent = isBot ? "Открыть" : "Подписаться";
+                      b.textContent = isB ? "Открыть" : "Подписаться";
                       b.classList.remove("done");
                     }
                   }
@@ -1765,54 +1799,37 @@
             btn.querySelector("span").textContent = "Проверить подписку";
           });
 
-        // ═══ FINAL MODAL ═══
-        function showFinalModal() {
-          killAllLotties();
-          const ov = document.getElementById("modal-final");
-          const pN = winnerPrize
-            ? winnerPrize.name
-            : USER_STATE?.prize_name || "Приз";
+        // ═══ FINAL ═══
+        function showFinal() {
+          killLotties();
+          const pN = wP ? wP.name : US?.prize_name || "Приз";
           document.getElementById("final-prize-name").textContent = pN;
-          const tU = winnerPrize
-            ? winnerPrize.tgs
-            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
-          const em = winnerPrize
-            ? winnerPrize.emoji
-            : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
+          const tU = wP
+            ? wP.tgs
+            : PRIZES.find((p) => p.key === US?.prize_key)?.tgs;
+          const em = wP
+            ? wP.emoji
+            : PRIZES.find((p) => p.key === US?.prize_key)?.emoji;
           if (tU) playLottie(document.getElementById("final-sticker"), tU, em);
-
-          if (!claimedAtUnix) {
-            claimedAtUnix = USER_STATE?.claimed_at || Date.now() / 1000;
-          }
-          refCount = USER_STATE?.referral_count || refCount || 0;
-          timerSpeed = calcSpeed(refCount);
+          if (!claimedAt) claimedAt = US?.claimed_at || Date.now() / 1000;
+          refCount = US?.referral_count || refCount || 0;
+          tSpeed = calcSpeed(refCount);
+          initIcons();
           startTimer();
-
-          ov.classList.remove("hidden");
-          gsap.from(ov.querySelector(".modal-box"), {
-            scale: 0.5,
-            y: 30,
-            opacity: 0,
-            duration: 0.4,
-            ease: "back.out(1.7)",
-          });
+          openModal("modal-final", ".modal-final-box");
           confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
         }
 
-        // ═══ SPEEDUP MODAL ═══
+        // ═══ SPEEDUP ═══
         document
           .getElementById("btn-speedup")
-          .addEventListener("click", showSpeedupModal);
+          .addEventListener("click", showSpeed);
 
-        function showSpeedupModal() {
+        function showSpeed() {
           document.getElementById("su-ref-count").textContent = refCount;
-          document.getElementById("su-speed").textContent = "x" + timerSpeed;
-
-          // Progress bar
-          const fill = Math.min(refCount / 8, 1) * 100;
-          document.getElementById("ref-fill").style.width = fill + "%";
-
-          // Milestones
+          document.getElementById("su-speed").textContent = "x" + tSpeed;
+          document.getElementById("ref-fill").style.width =
+            Math.min(refCount / 8, 1) * 100 + "%";
           [
             ["ms-2", 2],
             ["ms-4", 4],
@@ -1823,47 +1840,29 @@
             if (refCount >= n) el.classList.add("reached");
             else el.classList.remove("reached");
           });
-
-          const ov = document.getElementById("modal-speedup");
-          ov.classList.remove("hidden");
-          gsap.from(ov.querySelector(".modal-box"), {
-            scale: 0.5,
-            y: 30,
-            opacity: 0,
-            duration: 0.4,
-            ease: "back.out(1.7)",
-          });
+          initIcons();
+          openModal("modal-speedup", ".modal-speedup-box");
         }
 
         document.getElementById("btn-share").addEventListener("click", () => {
-          const uid = USER_STATE?.telegram_id || 0;
-          const refLink = `https://t.me/${BOT_USERNAME}?start=ref_${uid}`;
-          const shareText = "🎁 Крути рулетку и получи бесплатный подарок!";
-          const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`;
+          const uid = US?.telegram_id || 0;
+          const url = `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT}?start=ref_${uid}`)}&text=${encodeURIComponent("🎁 Крути рулетку и получи бесплатный подарок!")}`;
           try {
-            Telegram.WebApp.openTelegramLink(shareUrl);
+            Telegram.WebApp.openTelegramLink(url);
           } catch (e) {
-            window.open(shareUrl, "_blank");
+            window.open(url, "_blank");
           }
         });
 
         document
           .getElementById("btn-back-speedup")
           .addEventListener("click", () => {
-            const ov = document.getElementById("modal-speedup");
-            gsap.to(ov.querySelector(".modal-box"), {
-              scale: 0,
-              opacity: 0,
-              duration: 0.2,
-              onComplete() {
-                ov.classList.add("hidden");
-              },
-            });
+            closeModal("modal-speedup", ".modal-speedup-box");
           });
 
-        // ═══ STARS MODAL ═══
-        let starsContent = "",
-          starsLoaded = false;
+        // ═══ STARS ═══
+        let starsC = "",
+          starsL = false;
 
         document
           .getElementById("btn-earn-stars")
@@ -1871,19 +1870,17 @@
             const ov = document.getElementById("modal-stars");
             ov.classList.remove("hidden");
             gsap.from(ov, { opacity: 0, duration: 0.25 });
-
+            initIcons();
             if (isAdmin)
               document
                 .getElementById("btn-edit-stars")
                 .classList.remove("hidden");
-
-            if (!starsLoaded) {
+            if (!starsL) {
               try {
-                const res = await api("get-page", { key: "earn_stars" });
-                starsContent = res.content || "";
-                document.getElementById("stars-content").textContent =
-                  starsContent;
-                starsLoaded = true;
+                const r = await api("get-page", { key: "earn_stars" });
+                starsC = r.content || "";
+                document.getElementById("stars-content").textContent = starsC;
+                starsL = true;
               } catch (e) {
                 document.getElementById("stars-content").textContent =
                   "Ошибка загрузки";
@@ -1907,11 +1904,10 @@
             document.getElementById("stars-content").classList.remove("hidden");
           });
 
-        // Admin edit
         document
           .getElementById("btn-edit-stars")
           .addEventListener("click", () => {
-            document.getElementById("stars-textarea").value = starsContent;
+            document.getElementById("stars-textarea").value = starsC;
             document.getElementById("stars-content").classList.add("hidden");
             document
               .getElementById("stars-edit-wrap")
@@ -1928,17 +1924,14 @@
         document
           .getElementById("btn-save-stars")
           .addEventListener("click", async () => {
-            const newContent = document.getElementById("stars-textarea").value;
+            const nc = document.getElementById("stars-textarea").value;
             const btn = document.getElementById("btn-save-stars");
             btn.textContent = "Сохраняем...";
             btn.disabled = true;
             try {
-              await api("save-page", {
-                key: "earn_stars",
-                content: newContent,
-              });
-              starsContent = newContent;
-              document.getElementById("stars-content").textContent = newContent;
+              await api("save-page", { key: "earn_stars", content: nc });
+              starsC = nc;
+              document.getElementById("stars-content").textContent = nc;
               toast("Сохранено!", "success");
             } catch (e) {
               toast("Ошибка сохранения");
@@ -1950,12 +1943,12 @@
           });
 
         // ═══ Rays ═══
-        const raysBox = document.getElementById("rays-container");
+        const rB = document.getElementById("rays-container");
         for (let i = 0; i < 12; i++) {
           const r = document.createElement("div");
           r.className = "ray";
           r.style.setProperty("--i", i);
-          raysBox.appendChild(r);
+          rB.appendChild(r);
         }
 
         // ═══ INIT ═══
@@ -1968,13 +1961,13 @@
           try {
             const res = await api("get-user");
             if (res.ok) {
-              USER_STATE = res.user;
+              US = res.user;
               CHANNELS = res.channels || [];
               PRIZES = res.prizes || [];
               isAdmin = res.user.is_admin || false;
               refCount = res.user.referral_count || 0;
-              timerSpeed = calcSpeed(refCount);
-              if (res.user.claimed_at) claimedAtUnix = res.user.claimed_at;
+              tSpeed = calcSpeed(refCount);
+              if (res.user.claimed_at) claimedAt = res.user.claimed_at;
             }
           } catch (e) {
             PRIZES = [
@@ -2059,12 +2052,14 @@
             ];
           }
 
-          if (!USER_STATE || USER_STATE.state === "new") {
+          // Load TGS — icons always, prizes depending on state
+          const iconP = Object.values(IC).map((u) => loadTGS(u));
+          if (!US || US.state === "new") {
             await loadTGS(MAIN_TGS);
-            await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
+            await Promise.all([...PRIZES.map((p) => loadTGS(p.tgs)), ...iconP]);
           } else {
-            const pu = PRIZES.find((p) => p.key === USER_STATE.prize_key)?.tgs;
-            if (pu) await loadTGS(pu);
+            const pu = PRIZES.find((p) => p.key === US.prize_key)?.tgs;
+            await Promise.all([pu ? loadTGS(pu) : Promise.resolve(), ...iconP]);
           }
 
           const ls = document.getElementById("loading-screen");
@@ -2074,14 +2069,13 @@
             Telegram.WebApp.ready();
           } catch (e) {}
 
-          if (USER_STATE?.state === "claimed") {
-            showFinalModal();
+          if (US?.state === "claimed") {
+            showFinal();
             return;
           }
-          if (USER_STATE?.state === "rolled") {
-            winnerPrize =
-              PRIZES.find((p) => p.key === USER_STATE.prize_key) || PRIZES[0];
-            showSubModal();
+          if (US?.state === "rolled") {
+            wP = PRIZES.find((p) => p.key === US.prize_key) || PRIZES[0];
+            showSub();
             return;
           }
 
@@ -2113,53 +2107,48 @@
 
         // ═══ TAP ═══
         let taps = 0,
-          finished = false;
-        const starWrapper = document.getElementById("star-wrapper"),
-          starEl = document.getElementById("star-container"),
-          glowEl = document.getElementById("glow");
-        const progressFill = document.getElementById("progress-fill"),
-          counterText = document.getElementById("counter-text");
+          fin = false;
+        const sW = document.getElementById("star-wrapper"),
+          sE = document.getElementById("star-container"),
+          gE = document.getElementById("glow");
+        const pF = document.getElementById("progress-fill"),
+          cT = document.getElementById("counter-text");
 
-        starWrapper.addEventListener("pointerdown", (e) => {
+        sW.addEventListener("pointerdown", (e) => {
           e.preventDefault();
-          if (finished) return;
+          if (fin) return;
           taps++;
           const p = taps / MAX_TAPS;
           try {
             Telegram.WebApp.HapticFeedback.impactOccurred("medium");
           } catch (e) {}
           const sc = 1 + taps * 0.06;
-          gsap.to(starEl, {
+          gsap.to(sE, {
             scale: sc + 0.12,
             duration: 0.08,
             onComplete: () =>
-              gsap.to(starEl, {
-                scale: sc,
-                duration: 0.2,
-                ease: "back.out(2)",
-              }),
+              gsap.to(sE, { scale: sc, duration: 0.2, ease: "back.out(2)" }),
           });
-          gsap.to(glowEl, {
+          gsap.to(gE, {
             scale: 1 + p * 0.9,
             opacity: 0.5 + p * 0.5,
             duration: 0.15,
           });
-          progressFill.style.width = `${p * 100}%`;
-          counterText.textContent = `${taps} / ${MAX_TAPS}`;
-          showTapEffect(e.clientX, e.clientY);
-          burstCSS(e.clientX, e.clientY, PARTICLE_COUNT);
-          if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
+          pF.style.width = `${p * 100}%`;
+          cT.textContent = `${taps} / ${MAX_TAPS}`;
+          showTE(e.clientX, e.clientY);
+          burst(e.clientX, e.clientY, P_COUNT);
+          if (taps < MAX_TAPS) addSh(2 + taps * 0.5);
           if (taps >= MAX_TAPS) {
-            finished = true;
-            startFinale();
+            fin = true;
+            finale();
           }
         });
 
-        // ═══ Finale ═══
-        async function startFinale() {
-          freezeShake(25, 3000);
-          gsap.to(starEl, { scale: 2.2, duration: 2.5, ease: "power1.in" });
-          gsap.to(glowEl, { scale: 3, opacity: 1, duration: 2.5 });
+        async function finale() {
+          frSh(25, 3000);
+          gsap.to(sE, { scale: 2.2, duration: 2.5, ease: "power1.in" });
+          gsap.to(gE, { scale: 3, opacity: 1, duration: 2.5 });
           document
             .querySelectorAll(".ray")
             .forEach((r) => (r.style.animation = "none"));
@@ -2170,18 +2159,18 @@
             spread: 50,
             origin: { x: 0.5, y: 0.4 },
           });
-          killAllLotties();
-          const flash = document.getElementById("flash");
-          flash.style.opacity = "1";
+          killLotties();
+          const fl = document.getElementById("flash");
+          fl.style.opacity = "1";
           await sleep(1000);
           document.getElementById("main-scene").classList.add("hidden");
-          shakeAmt = 0;
-          shakeFrozen = false;
-          initRoulette();
+          shA = 0;
+          shF = false;
+          initR();
           document.getElementById("roulette-scene").classList.remove("hidden");
-          spinRoulette();
+          spinR();
           await sleep(300);
-          flash.style.opacity = "0";
+          fl.style.opacity = "0";
         }
 
         function sleep(ms) {
