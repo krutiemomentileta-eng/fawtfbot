@@ -27,7 +27,6 @@
         display: none !important;
       }
 
-      /* LOADING */
       #loading-screen {
         position: fixed;
         top: 0;
@@ -60,7 +59,6 @@
         margin-top: 14px;
       }
 
-      /* FLASH */
       #flash {
         position: fixed;
         top: 0;
@@ -74,7 +72,6 @@
         transition: opacity 0.8s;
       }
 
-      /* MAIN */
       #main-scene {
         position: relative;
         width: 100%;
@@ -95,7 +92,6 @@
         height: 260px;
         contain: layout style;
       }
-
       .ray {
         position: absolute;
         top: 48%;
@@ -123,7 +119,6 @@
           opacity: 0.7;
         }
       }
-
       #glow {
         position: absolute;
         width: 200px;
@@ -150,7 +145,6 @@
           opacity: 1;
         }
       }
-
       #star-wrapper {
         position: relative;
         cursor: pointer;
@@ -192,7 +186,6 @@
           opacity: 0;
         }
       }
-
       #tap-text {
         margin-top: 20px;
         font-size: 26px;
@@ -214,7 +207,6 @@
           transform: translateY(-6px);
         }
       }
-
       #tap-counter {
         margin-top: 16px;
         text-align: center;
@@ -254,7 +246,6 @@
           transform: translate(var(--dx), var(--dy)) scale(0);
         }
       }
-
       .tap-effect {
         position: fixed;
         font-size: 22px;
@@ -277,7 +268,6 @@
         }
       }
 
-      /* ROULETTE */
       #roulette-scene {
         position: fixed;
         top: 0;
@@ -379,7 +369,6 @@
         pointer-events: none;
       }
 
-      /* MODALS */
       .modal-overlay {
         position: fixed;
         top: 0;
@@ -393,7 +382,7 @@
         z-index: 200;
       }
       .modal-box {
-        background: white;
+        background: #fff;
         border-radius: 24px;
         padding: 30px 24px;
         text-align: center;
@@ -425,13 +414,14 @@
         color: #333;
         margin-bottom: 20px;
       }
+
       .btn-primary {
         position: relative;
         width: 100%;
         padding: 15px;
         font-size: 16px;
         font-weight: 700;
-        color: white;
+        color: #fff;
         background: linear-gradient(135deg, #ffd700, #ffa500);
         border: none;
         border-radius: 14px;
@@ -523,11 +513,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
-      .channel-type-badge {
-        font-size: 11px;
-        color: #999;
-        margin-top: 2px;
-      }
       .channel-sub-btn {
         padding: 8px 14px;
         font-size: 13px;
@@ -540,9 +525,6 @@
         flex-shrink: 0;
         margin-left: 10px;
       }
-      .channel-sub-btn.bot-btn {
-        background: #9b59b6;
-      }
       .channel-sub-btn.done {
         background: #4caf50;
         pointer-events: none;
@@ -554,7 +536,7 @@
         left: 50%;
         transform: translateX(-50%) translateY(-100px);
         background: #ff4757;
-        color: white;
+        color: #fff;
         padding: 12px 24px;
         border-radius: 12px;
         font-size: 14px;
@@ -570,20 +552,448 @@
         background: #4caf50;
       }
 
-      .final-icon {
-        font-size: 50px;
-        margin-bottom: 15px;
+      /* ══════ FINAL MODAL ══════ */
+      .modal-final-box {
+        max-width: 360px;
+        padding: 28px 20px 24px;
+      }
+      .final-check {
+        font-size: 44px;
+        margin-bottom: 8px;
+        animation: check-pop 0.5s ease-out;
+      }
+      @keyframes check-pop {
+        0% {
+          transform: scale(0) rotate(-45deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.2) rotate(5deg);
+        }
+        100% {
+          transform: scale(1) rotate(0);
+          opacity: 1;
+        }
       }
       .final-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: #333;
-        margin-bottom: 10px;
+        margin-bottom: 4px;
+        line-height: 1.3;
       }
-      .final-text {
-        font-size: 14px;
+      .final-sub {
+        font-size: 13px;
+        color: #999;
+        margin-bottom: 16px;
+      }
+
+      /* Timer */
+      .timer-wrap {
+        background: linear-gradient(135deg, #1a1a2e, #16213e);
+        border-radius: 16px;
+        padding: 18px 16px 14px;
+        margin: 0 0 18px;
+        position: relative;
+        overflow: hidden;
+      }
+      .timer-wrap::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 215, 0, 0.06) 0%,
+          transparent 60%
+        );
+        animation: timer-glow 4s ease-in-out infinite;
+      }
+      @keyframes timer-glow {
+        0%,
+        100% {
+          transform: translate(0, 0);
+        }
+        50% {
+          transform: translate(5%, 5%);
+        }
+      }
+      .timer-label {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+      .timer-display {
+        font-family: "Courier New", Consolas, monospace;
+        font-size: 40px;
+        font-weight: 900;
+        color: #ffd700;
+        text-shadow:
+          0 0 20px rgba(255, 215, 0, 0.4),
+          0 0 40px rgba(255, 215, 0, 0.15);
+        letter-spacing: 3px;
+        line-height: 1;
+        animation: timer-tick 1s ease-in-out infinite;
+      }
+      @keyframes timer-tick {
+        0%,
+        100% {
+          text-shadow:
+            0 0 20px rgba(255, 215, 0, 0.4),
+            0 0 40px rgba(255, 215, 0, 0.15);
+        }
+        50% {
+          text-shadow:
+            0 0 25px rgba(255, 215, 0, 0.6),
+            0 0 50px rgba(255, 215, 0, 0.25);
+        }
+      }
+      .timer-done {
+        color: #4caf50 !important;
+        text-shadow: 0 0 20px rgba(76, 175, 80, 0.4) !important;
+        animation: none !important;
+        font-size: 22px !important;
+        padding: 8px 0;
+      }
+      .speed-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: #1a1a2e;
+        font-weight: 800;
+        padding: 4px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        margin-top: 10px;
+        letter-spacing: 0.5px;
+      }
+      .speed-badge.fast {
+        animation: badge-pulse 1s ease-in-out infinite;
+      }
+      @keyframes badge-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.08);
+        }
+      }
+
+      /* Final action buttons */
+      .final-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 4px;
+      }
+      .btn-action {
+        flex: 1;
+        padding: 14px 8px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: transform 0.1s;
+        position: relative;
+        overflow: hidden;
+        line-height: 1.3;
+      }
+      .btn-action:active {
+        transform: scale(0.95);
+      }
+      .btn-speedup {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+      .btn-earn-stars {
+        background: linear-gradient(135deg, #f5af19, #f12711);
+        box-shadow: 0 4px 15px rgba(241, 39, 17, 0.2);
+      }
+      .btn-action-icon {
+        font-size: 20px;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      /* ══════ SPEEDUP MODAL ══════ */
+      .modal-speedup-box {
+        max-width: 360px;
+        padding: 28px 20px 24px;
+      }
+      .speedup-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: #333;
+        margin-bottom: 6px;
+      }
+      .speedup-desc {
+        font-size: 13px;
         color: #888;
         line-height: 1.5;
+        margin-bottom: 20px;
+      }
+      .speedup-current {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #f8f9fa;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 20px;
+      }
+      .speedup-stat {
+        text-align: center;
+      }
+      .speedup-stat-val {
+        font-size: 26px;
+        font-weight: 900;
+        color: #333;
+        line-height: 1;
+      }
+      .speedup-stat-label {
+        font-size: 11px;
+        color: #999;
+        margin-top: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .speedup-divider {
+        width: 1px;
+        height: 40px;
+        background: #e0e0e0;
+      }
+
+      /* Progress track */
+      .ref-progress {
+        margin-bottom: 24px;
+      }
+      .ref-track {
+        position: relative;
+        height: 8px;
+        background: #e8e8e8;
+        border-radius: 4px;
+        margin: 0 4px 30px;
+      }
+      .ref-fill {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: linear-gradient(90deg, #ffd700, #ffa500);
+        border-radius: 4px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .ref-milestone {
+        position: absolute;
+        top: -6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #d0d0d0;
+        border: 3px solid #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0;
+        transition: background 0.3s;
+      }
+      .ref-milestone.reached {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+      }
+      .ref-milestone-info {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        text-align: center;
+        white-space: nowrap;
+      }
+      .ref-milestone-count {
+        font-size: 11px;
+        font-weight: 700;
+        color: #555;
+      }
+      .ref-milestone-speed {
+        font-size: 10px;
+        color: #999;
+        font-weight: 600;
+      }
+      .ref-milestone.reached .ref-milestone-count {
+        color: #f90;
+      }
+      .ref-milestone.reached .ref-milestone-speed {
+        color: #ffa500;
+      }
+
+      .btn-share {
+        width: 100%;
+        padding: 15px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #0088cc, #0077b5);
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: transform 0.1s;
+        box-shadow: 0 4px 15px rgba(0, 136, 204, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      .btn-share:active {
+        transform: scale(0.95);
+      }
+      .ref-hint {
+        font-size: 12px;
+        color: #aaa;
+        margin-top: 12px;
+        line-height: 1.4;
+      }
+      .btn-back-small {
+        background: none;
+        border: none;
+        color: #999;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 14px;
+        padding: 8px;
+      }
+
+      /* ══════ STARS MODAL (fullscreen) ══════ */
+      .modal-fs {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        z-index: 210;
+        display: flex;
+        flex-direction: column;
+      }
+      .modal-fs-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        flex-shrink: 0;
+      }
+      .modal-fs-title {
+        font-size: 17px;
+        font-weight: 700;
+        color: #333;
+      }
+      .modal-fs-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f0f0f0;
+        border: none;
+        font-size: 16px;
+        color: #999;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s;
+      }
+      .modal-fs-close:active {
+        background: #e0e0e0;
+      }
+      .modal-fs-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        font-size: 15px;
+        color: #444;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .modal-fs-body:empty::after {
+        content: "Загрузка...";
+        color: #ccc;
+      }
+      .btn-admin-edit {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        border: none;
+        font-size: 20px;
+        box-shadow: 0 4px 20px rgba(255, 165, 0, 0.4);
+        cursor: pointer;
+        z-index: 215;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .stars-edit-wrap {
+        padding: 20px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .stars-textarea {
+        flex: 1;
+        width: 100%;
+        border: 2px solid #e0e0e0;
+        border-radius: 14px;
+        padding: 14px;
+        font-size: 15px;
+        font-family: inherit;
+        resize: none;
+        line-height: 1.6;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .stars-textarea:focus {
+        border-color: #ffd700;
+      }
+      .stars-edit-btns {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        flex-shrink: 0;
+      }
+      .btn-save {
+        flex: 1;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #4caf50, #43a047);
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      .btn-cancel {
+        flex: 1;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 600;
+        color: #666;
+        background: #f0f0f0;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
       }
     </style>
   </head>
@@ -595,7 +1005,6 @@
     <div id="flash"></div>
     <div id="toast" class="toast"></div>
 
-    <!-- TAP -->
     <div id="main-scene" class="hidden">
       <div id="star-area">
         <div id="rays-container"></div>
@@ -621,20 +1030,17 @@
       </div>
     </div>
 
-    <!-- ROULETTE -->
     <div id="roulette-scene" class="hidden">
       <div id="roulette-title">🎰 Крутим рулетку...</div>
       <div id="roulette-wrapper">
         <div id="roulette-pointer-top"></div>
         <div id="roulette-pointer-bottom"></div>
         <div id="roulette-line"></div>
-        <div id="roulette-viewport">
-          <div id="roulette-strip"></div>
-        </div>
+        <div id="roulette-viewport"><div id="roulette-strip"></div></div>
       </div>
     </div>
 
-    <!-- MODALS -->
+    <!-- Prize reveal -->
     <div id="modal-prize" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>ВАМ ВЫПАЛ:</h2>
@@ -646,6 +1052,7 @@
       </div>
     </div>
 
+    <!-- Subscribe -->
     <div id="modal-subscribe" class="modal-overlay hidden">
       <div class="modal-box">
         <h2>🎁 Получите приз!</h2>
@@ -661,16 +1068,106 @@
       </div>
     </div>
 
+    <!-- FINAL — redesigned -->
     <div id="modal-final" class="modal-overlay hidden">
-      <div class="modal-box">
-        <div class="final-icon">✅</div>
+      <div class="modal-box modal-final-box">
+        <div class="final-check">✅</div>
         <div id="final-sticker" class="modal-sticker"></div>
         <p id="final-prize-name" class="modal-prize-name"></p>
-        <h3 class="final-title">ЗАЯВКА НА ВЫВОД ПРИЗА ОТПРАВЛЕНА!</h3>
-        <p class="final-text">
-          Приз будет выдан в течение 24 часов.<br />Спасибо за участие! 🎉
-        </p>
+        <div class="final-title">ЗАЯВКА НА ВЫВОД ПРИЗА ОТПРАВЛЕНА!</div>
+        <div class="final-sub">Ожидайте — приз будет выдан автоматически</div>
+
+        <div class="timer-wrap">
+          <div class="timer-label">До вывода приза осталось</div>
+          <div id="timer-display" class="timer-display">24:00:00</div>
+          <div id="speed-badge" class="speed-badge">⚡ x1</div>
+        </div>
+
+        <div class="final-actions">
+          <button id="btn-speedup" class="btn-action btn-speedup">
+            <span class="btn-action-icon">🚀</span>Ускорить вывод
+          </button>
+          <button id="btn-earn-stars" class="btn-action btn-earn-stars">
+            <span class="btn-action-icon">⭐</span>Заработать звёзды
+          </button>
+        </div>
       </div>
+    </div>
+
+    <!-- SPEEDUP -->
+    <div id="modal-speedup" class="modal-overlay hidden">
+      <div class="modal-box modal-speedup-box">
+        <h2>🚀 Ускорить вывод</h2>
+        <p class="speedup-desc">
+          Пригласи друзей — каждые 2 друга ускоряют таймер вдвое! Друг
+          засчитывается когда получит свой подарок.
+        </p>
+
+        <div class="speedup-current">
+          <div class="speedup-stat">
+            <div id="su-ref-count" class="speedup-stat-val">0</div>
+            <div class="speedup-stat-label">Друзей</div>
+          </div>
+          <div class="speedup-divider"></div>
+          <div class="speedup-stat">
+            <div id="su-speed" class="speedup-stat-val">x1</div>
+            <div class="speedup-stat-label">Скорость</div>
+          </div>
+        </div>
+
+        <div class="ref-progress">
+          <div class="ref-track">
+            <div id="ref-fill" class="ref-fill" style="width: 0%"></div>
+            <div class="ref-milestone" id="ms-2" style="left: 25%">
+              <div class="ref-milestone-info">
+                <div class="ref-milestone-count">2</div>
+                <div class="ref-milestone-speed">x2</div>
+              </div>
+            </div>
+            <div class="ref-milestone" id="ms-4" style="left: 50%">
+              <div class="ref-milestone-info">
+                <div class="ref-milestone-count">4</div>
+                <div class="ref-milestone-speed">x4</div>
+              </div>
+            </div>
+            <div class="ref-milestone" id="ms-6" style="left: 75%">
+              <div class="ref-milestone-info">
+                <div class="ref-milestone-count">6</div>
+                <div class="ref-milestone-speed">x8</div>
+              </div>
+            </div>
+            <div class="ref-milestone" id="ms-8" style="left: 100%">
+              <div class="ref-milestone-info">
+                <div class="ref-milestone-count">8</div>
+                <div class="ref-milestone-speed">x16</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-share" class="btn-share">📤 Пригласить друга</button>
+        <p class="ref-hint">
+          Ваша реферальная ссылка будет прикреплена автоматически
+        </p>
+        <button id="btn-back-speedup" class="btn-back-small">← Назад</button>
+      </div>
+    </div>
+
+    <!-- STARS (fullscreen) -->
+    <div id="modal-stars" class="modal-fs hidden">
+      <div class="modal-fs-header">
+        <span class="modal-fs-title">⭐ Заработать звёзды</span>
+        <button id="btn-close-stars" class="modal-fs-close">✕</button>
+      </div>
+      <div id="stars-content" class="modal-fs-body"></div>
+      <div id="stars-edit-wrap" class="stars-edit-wrap hidden">
+        <textarea id="stars-textarea" class="stars-textarea"></textarea>
+        <div class="stars-edit-btns">
+          <button id="btn-save-stars" class="btn-save">💾 Сохранить</button>
+          <button id="btn-cancel-edit" class="btn-cancel">Отмена</button>
+        </div>
+      </div>
+      <button id="btn-edit-stars" class="btn-admin-edit hidden">✏️</button>
     </div>
 
     <script
@@ -707,28 +1204,77 @@
 
       function startApp() {
         const API_BASE = "/api";
-        const MAIN_TGS = "assets/gift.tgs";
-        const MAIN_EMOJI = "🎁";
-        const MAX_TAPS = 10;
-        const ROULETTE_TOTAL = 70;
+        const MAIN_TGS = "assets/gift.tgs",
+          MAIN_EMOJI = "🎁";
+        const MAX_TAPS = 10,
+          ROULETTE_TOTAL = 70;
         const ITEM_W = 96,
           ITEM_GAP = 10,
           ITEM_STEP = 106;
+        const PARTICLE_COUNT = 8,
+          CONFETTI_COUNT = 80;
+        const BOT_USERNAME = "fawtfbot";
+        const TOTAL_SECONDS = 86400;
 
         let PRIZES = [],
           CHANNELS = [],
           USER_STATE = null;
-
-        // Трекер нажатых кнопок «Открыть» для ботов
         const openedBots = new Set();
 
-        const PARTICLE_COUNT = 8;
-        const CONFETTI_COUNT = 80;
+        // ═══ Timer state ═══
+        let claimedAtUnix = null,
+          refCount = 0,
+          timerSpeed = 1,
+          timerInterval = null,
+          isAdmin = false;
 
-        // ═══ TGS CACHE ═══
-        const tgsRaw = {};
-        const tgsString = {};
+        function calcSpeed(r) {
+          return r >= 2 ? Math.pow(2, Math.floor(r / 2)) : 1;
+        }
 
+        function fmtTime(sec) {
+          if (sec <= 0) return null;
+          const h = Math.floor(sec / 3600),
+            m = Math.floor((sec % 3600) / 60),
+            s = Math.floor(sec % 60);
+          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
+
+        function startTimer() {
+          if (timerInterval) clearInterval(timerInterval);
+          updateTimerDisplay();
+          timerInterval = setInterval(updateTimerDisplay, 500);
+        }
+
+        function updateTimerDisplay() {
+          if (!claimedAtUnix) return;
+          const now = Date.now() / 1000;
+          const elapsed = now - claimedAtUnix;
+          const effective = elapsed * timerSpeed;
+          const remaining = Math.max(0, TOTAL_SECONDS - effective);
+          const el = document.getElementById("timer-display");
+          const badge = document.getElementById("speed-badge");
+          if (!el) return;
+
+          const t = fmtTime(remaining);
+          if (!t) {
+            el.textContent = "✅ ГОТОВО!";
+            el.classList.add("timer-done");
+            badge.style.display = "none";
+            clearInterval(timerInterval);
+            return;
+          }
+          el.textContent = t;
+          el.classList.remove("timer-done");
+          badge.style.display = "";
+          badge.textContent = `⚡ x${timerSpeed}`;
+          if (timerSpeed > 1) badge.classList.add("fast");
+          else badge.classList.remove("fast");
+        }
+
+        // ═══ TGS ═══
+        const tgsRaw = {},
+          tgsString = {};
         try {
           lottie.setQuality(2);
         } catch (e) {}
@@ -737,46 +1283,43 @@
           if (tgsRaw[url] !== undefined) return tgsRaw[url];
           try {
             const r = await fetch(url);
-            if (!r.ok) throw new Error(r.status);
+            if (!r.ok) throw 0;
             const buf = await r.arrayBuffer();
             const json = pako.inflate(new Uint8Array(buf), { to: "string" });
-            const parsed = JSON.parse(json);
-            tgsRaw[url] = parsed;
+            const p = JSON.parse(json);
+            tgsRaw[url] = p;
             tgsString[url] = json;
-            return parsed;
+            return p;
           } catch (e) {
             tgsRaw[url] = null;
             return null;
           }
         }
-
-        function cloneTGS(url) {
-          return tgsString[url] ? JSON.parse(tgsString[url]) : null;
+        function cloneTGS(u) {
+          return tgsString[u] ? JSON.parse(tgsString[u]) : null;
         }
 
         let activeLotties = [];
-
-        function playLottie(container, url, emoji) {
-          container.innerHTML = "";
-          const data = cloneTGS(url);
-          if (data) {
+        function playLottie(c, u, em) {
+          c.innerHTML = "";
+          const d = cloneTGS(u);
+          if (d) {
             try {
-              const anim = lottie.loadAnimation({
-                container,
+              const a = lottie.loadAnimation({
+                container: c,
                 renderer: "svg",
                 loop: true,
                 autoplay: true,
-                animationData: data,
+                animationData: d,
               });
-              anim.setSubframe(false);
-              activeLotties.push(anim);
-              return anim;
+              a.setSubframe(false);
+              activeLotties.push(a);
+              return a;
             } catch (e) {}
           }
-          container.textContent = emoji || "🎁";
+          c.textContent = em || "🎁";
           return null;
         }
-
         function killAllLotties() {
           activeLotties.forEach((a) => {
             try {
@@ -802,21 +1345,19 @@
           });
           return r.json();
         }
-
-        function toast(text, type = "error", ms = 3000) {
-          const t = document.getElementById("toast");
-          t.textContent = text;
-          t.className = "toast " + type;
-          requestAnimationFrame(() => t.classList.add("show"));
-          setTimeout(() => t.classList.remove("show"), ms);
+        function toast(t, type = "error", ms = 3000) {
+          const el = document.getElementById("toast");
+          el.textContent = t;
+          el.className = "toast " + type;
+          requestAnimationFrame(() => el.classList.add("show"));
+          setTimeout(() => el.classList.remove("show"), ms);
         }
 
-        // ═══ SHAKE ═══
+        // ═══ Shake ═══
         let shakeAmt = 0,
           shakeFrozen = false,
           shakeRaf = null;
         const mainScene = document.getElementById("main-scene");
-
         function addShake(a) {
           shakeAmt = Math.min(shakeAmt + a, 45);
           if (!shakeRaf) tickShake();
@@ -833,17 +1374,17 @@
             shakeRaf = null;
             return;
           }
-          const x = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
-          const y = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
+          const x = ((Math.random() - 0.5) * shakeAmt * 2) | 0,
+            y = ((Math.random() - 0.5) * shakeAmt * 2) | 0;
           mainScene.style.transform = `translate3d(${x}px,${y}px,0)`;
           if (!shakeFrozen) shakeAmt *= 0.85;
           shakeRaf = requestAnimationFrame(tickShake);
         }
 
-        // ═══ PARTICLES ═══
-        const particlePool = [];
-        const MAX_PARTICLES = 20;
-
+        // ═══ Particles ═══
+        const particlePool = [],
+          MAX_PARTICLES = 20,
+          PCOL = ["#FFD700", "#FFA500", "#FF6B6B"];
         for (let i = 0; i < MAX_PARTICLES; i++) {
           const p = document.createElement("div");
           p.className = "particle";
@@ -851,107 +1392,90 @@
           document.body.appendChild(p);
           particlePool.push({ el: p, busy: false });
         }
-
-        const PARTICLE_COLORS = ["#FFD700", "#FFA500", "#FF6B6B"];
-
         function burstCSS(x, y, n) {
           n = Math.min(n, PARTICLE_COUNT);
-          let used = 0;
-          for (let i = 0; i < particlePool.length && used < n; i++) {
-            const slot = particlePool[i];
-            if (slot.busy) continue;
-            slot.busy = true;
-            used++;
-
-            const angle = ((Math.PI * 2) / n) * used + Math.random() * 0.5;
-            const dist = 25 + Math.random() * 35;
-            const size = 3 + Math.random() * 3;
-            const el = slot.el;
-
-            el.style.cssText = `
-              left:${x}px;top:${y}px;
-              width:${size}px;height:${size}px;
-              --dx:${Math.cos(angle) * dist}px;--dy:${Math.sin(angle) * dist}px;
-              background:${PARTICLE_COLORS[used % 3]};
-              display:block;
-            `;
+          let u = 0;
+          for (let i = 0; i < particlePool.length && u < n; i++) {
+            const s = particlePool[i];
+            if (s.busy) continue;
+            s.busy = true;
+            u++;
+            const a = ((Math.PI * 2) / n) * u + Math.random() * 0.5,
+              d = 25 + Math.random() * 35,
+              sz = 3 + Math.random() * 3,
+              el = s.el;
+            el.style.cssText = `left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d}px;background:${PCOL[u % 3]};display:block`;
             el.style.animation = "none";
             el.offsetHeight;
             el.style.animation = "";
-
             setTimeout(() => {
               el.style.display = "none";
-              slot.busy = false;
+              s.busy = false;
             }, 600);
           }
         }
 
-        // ═══ TAP EFFECTS ═══
-        const tapPool = [];
-        const MAX_TAP_EFFECTS = 4;
-        const TAP_TEXTS = ["+1", "⭐", "✨", "💫"];
-
-        for (let i = 0; i < MAX_TAP_EFFECTS; i++) {
+        // ═══ Tap effects ═══
+        const tapPool = [],
+          MAX_TAP = 4,
+          TAP_T = ["+1", "⭐", "✨", "💫"];
+        for (let i = 0; i < MAX_TAP; i++) {
           const el = document.createElement("div");
           el.className = "tap-effect";
           el.style.display = "none";
           document.body.appendChild(el);
           tapPool.push({ el, busy: false });
         }
-
         function showTapEffect(x, y) {
           for (let i = 0; i < tapPool.length; i++) {
-            const slot = tapPool[i];
-            if (slot.busy) continue;
-            slot.busy = true;
-
-            const el = slot.el;
-            el.textContent = TAP_TEXTS[~~(Math.random() * 4)];
+            const s = tapPool[i];
+            if (s.busy) continue;
+            s.busy = true;
+            const el = s.el;
+            el.textContent = TAP_T[~~(Math.random() * 4)];
             el.style.left = x + (Math.random() - 0.5) * 30 + "px";
             el.style.top = y - 10 + "px";
             el.style.display = "block";
             el.style.animation = "none";
             el.offsetHeight;
             el.style.animation = "";
-
             setTimeout(() => {
               el.style.display = "none";
-              slot.busy = false;
+              s.busy = false;
             }, 500);
             return;
           }
         }
 
-        // ═══ ROULETTE ═══
+        // ═══ Roulette ═══
         let winnerPrize = null,
           winnerIndex = 0,
           scrollOffset = 0;
-        const liveSlots = new Map();
-        const slotPrizes = [];
+        const liveSlots = new Map(),
+          slotPrizes = [];
         const strip = document.getElementById("roulette-strip");
         const itemPool = [];
 
         function getPoolItem() {
           if (itemPool.length) return itemPool.pop();
-          const item = document.createElement("div");
-          item.className = "roulette-item";
+          const it = document.createElement("div");
+          it.className = "roulette-item";
           const sd = document.createElement("div");
           sd.className = "roulette-sticker";
-          item.appendChild(sd);
-          return item;
+          it.appendChild(sd);
+          return it;
         }
-
-        function returnPool(item, anim) {
-          if (anim)
+        function returnPool(it, an) {
+          if (an)
             try {
-              anim.destroy();
+              an.destroy();
             } catch (e) {}
-          item.firstChild.innerHTML = "";
-          item.style.borderColor = "#d0d0d0";
-          item.style.boxShadow = "";
-          item.style.transform = "";
-          strip.removeChild(item);
-          itemPool.push(item);
+          it.firstChild.innerHTML = "";
+          it.style.borderColor = "#d0d0d0";
+          it.style.boxShadow = "";
+          it.style.transform = "";
+          strip.removeChild(it);
+          itemPool.push(it);
         }
 
         function initRoulette() {
@@ -960,16 +1484,13 @@
           scrollOffset = 0;
           slotPrizes.length = 0;
           winnerIndex = ROULETTE_TOTAL - Math.floor(Math.random() * 5) - 8;
-
-          const forcedKey = USER_STATE?.forced_prize;
+          const fk = USER_STATE?.forced_prize;
           winnerPrize =
-            (forcedKey && PRIZES.find((p) => p.key === forcedKey)) ||
+            (fk && PRIZES.find((p) => p.key === fk)) ||
             PRIZES[Math.floor(Math.random() * PRIZES.length)];
-
-          for (let i = 0; i < ROULETTE_TOTAL; i++) {
+          for (let i = 0; i < ROULETTE_TOTAL; i++)
             slotPrizes[i] =
               i === winnerIndex ? winnerPrize : PRIZES[i % PRIZES.length];
-          }
         }
 
         let lastScroll = -999;
@@ -978,9 +1499,9 @@
           const center = scrollOffset + vpW / 2;
           for (const [idx, s] of liveSlots) {
             if (!s.anim) continue;
-            const itemCenter = 10 + idx * ITEM_STEP + ITEM_W / 2;
-            const dist = Math.abs(itemCenter - center);
-            if (dist > vpW * 0.6) {
+            const ic = 10 + idx * ITEM_STEP + ITEM_W / 2;
+            const d = Math.abs(ic - center);
+            if (d > vpW * 0.6) {
               if (!s.paused) {
                 s.anim.pause();
                 s.paused = true;
@@ -992,30 +1513,25 @@
               }
             }
           }
-          strip.style.transform = `translate3d(${-scrollOffset}px, 0, 0)`;
-
+          strip.style.transform = `translate3d(${-scrollOffset}px,0,0)`;
           if (Math.abs(scrollOffset - lastScroll) < ITEM_STEP * 0.4) return;
           lastScroll = scrollOffset;
-
-          const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP);
-          const last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
+          const first = Math.floor((scrollOffset - 10 - ITEM_W) / ITEM_STEP),
+            last = Math.ceil((scrollOffset + vpW + 10) / ITEM_STEP);
           const vMin = Math.max(0, first),
             vMax = Math.min(ROULETTE_TOTAL - 1, last);
-
           for (const [idx, s] of liveSlots) {
             if (idx < vMin || idx > vMax) {
               returnPool(s.el, s.anim);
               liveSlots.delete(idx);
             }
           }
-
           for (let i = vMin; i <= vMax; i++) {
             if (liveSlots.has(i)) continue;
             const prize = slotPrizes[i];
             const item = getPoolItem();
             const sd = item.firstChild;
             sd.innerHTML = "";
-
             let anim = null;
             const data = cloneTGS(prize.tgs);
             if (data) {
@@ -1034,7 +1550,6 @@
             } else {
               sd.innerHTML = `<div class="roulette-emoji">${prize.emoji || "🎁"}</div>`;
             }
-
             item.style.left = 10 + i * ITEM_STEP + "px";
             strip.appendChild(item);
             liveSlots.set(i, { el: item, anim });
@@ -1050,7 +1565,6 @@
             vpW / 2 +
             (Math.random() - 0.5) * 15;
           const obj = { val: 0 };
-
           gsap.to(obj, {
             val: target,
             duration: 12,
@@ -1070,7 +1584,7 @@
           const s = liveSlots.get(winnerIndex);
           if (s) {
             s.el.style.borderColor = "#FFD700";
-            s.el.style.boxShadow = "0 0 25px rgba(255,215,0,0.5)";
+            s.el.style.boxShadow = "0 0 25px rgba(255,215,0,.5)";
             gsap.to(s.el, {
               scale: 1.08,
               duration: 0.2,
@@ -1093,7 +1607,7 @@
           setTimeout(showPrizeModal, 1000);
         }
 
-        // ═══ MODALS ═══
+        // ═══ Modals ═══
         function showPrizeModal() {
           for (const [, s] of liveSlots)
             if (s.anim) {
@@ -1103,7 +1617,6 @@
               } catch (e) {}
             }
           killAllLotties();
-
           const ov = document.getElementById("modal-prize");
           document.getElementById("modal-prize-name").textContent =
             winnerPrize.name;
@@ -1120,11 +1633,7 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({
-            particleCount: 60,
-            spread: 60,
-            origin: { y: 0.5 },
-          });
+          confetti({ particleCount: 60, spread: 60, origin: { y: 0.5 } });
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
@@ -1143,56 +1652,37 @@
         function showSubModal() {
           killAllLotties();
           const ov = document.getElementById("modal-subscribe");
-          const pName = winnerPrize
+          const pN = winnerPrize
             ? winnerPrize.name
             : USER_STATE?.prize_name || "Приз";
-          document.getElementById("sub-prize-name").textContent = pName;
-          const tUrl = winnerPrize
+          document.getElementById("sub-prize-name").textContent = pN;
+          const tU = winnerPrize
             ? winnerPrize.tgs
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
           const em = winnerPrize
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-          if (tUrl)
-            playLottie(document.getElementById("sub-sticker"), tUrl, em);
-
+          if (tU) playLottie(document.getElementById("sub-sticker"), tU, em);
           const list = document.getElementById("channel-list");
           list.innerHTML = "";
-
           CHANNELS.forEach((ch) => {
             const isBot = ch.type === "bot";
             const li = document.createElement("li");
             li.className = "channel-item";
-
-            const avatarIcon = ch.avatar
+            const avI = ch.avatar
               ? `<img src="${ch.avatar}" loading="lazy">`
               : isBot
                 ? "🤖"
                 : "📢";
-
-            const btnText = isBot ? "Открыть" : "Подписаться";
-
-            li.innerHTML = `
-              <div class="channel-avatar">${avatarIcon}</div>
-              <div class="channel-info">
-                <div class="channel-name">${ch.name}</div>
-              </div>
-              <button class="channel-sub-btn"
-                      data-link="${ch.link}"
-                      data-type="${ch.type || "channel"}"
-                      data-id="${ch.id}">
-                ${btnText}
-              </button>`;
+            li.innerHTML = `<div class="channel-avatar">${avI}</div><div class="channel-info"><div class="channel-name">${ch.name}</div></div><button class="channel-sub-btn" data-link="${ch.link}" data-type="${ch.type || "channel"}" data-id="${ch.id}">${isBot ? "Открыть" : "Подписаться"}</button>`;
             list.appendChild(li);
           });
-
           list.querySelectorAll(".channel-sub-btn").forEach((btn) => {
             btn.addEventListener("click", (e) => {
               e.stopPropagation();
-              const link = btn.getAttribute("data-link");
-              const type = btn.getAttribute("data-type");
-              const id = btn.getAttribute("data-id");
-
+              const link = btn.getAttribute("data-link"),
+                type = btn.getAttribute("data-type"),
+                id = btn.getAttribute("data-id");
               try {
                 if (link && link.includes("t.me/"))
                   Telegram.WebApp.openTelegramLink(link);
@@ -1200,13 +1690,10 @@
               } catch (err) {
                 window.open(link, "_blank");
               }
-
-              // Для ботов: отмечаем как открыто
               if (type === "bot" && !openedBots.has(id)) {
                 openedBots.add(id);
                 btn.textContent = "✓";
                 btn.classList.add("done");
-
                 api("check-subscription", {
                   action: "mark_bot_opened",
                   bot_id: id,
@@ -1214,7 +1701,6 @@
               }
             });
           });
-
           ov.classList.remove("hidden");
           gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
@@ -1232,15 +1718,15 @@
             btn.disabled = true;
             btn.querySelector("span").textContent = "Проверяем...";
             try {
-              const res = await api("check-subscription", {
-                action: "check",
-              });
+              const res = await api("check-subscription", { action: "check" });
               if (res.all_subscribed) {
                 document.querySelectorAll(".channel-sub-btn").forEach((b) => {
                   b.textContent = "✓";
                   b.classList.add("done");
                 });
                 toast("Подписки подтверждены!", "success");
+                refCount = res.referral_count || 0;
+                timerSpeed = calcSpeed(refCount);
                 await sleep(800);
                 const ov = document.getElementById("modal-subscribe");
                 gsap.to(ov.querySelector(".modal-box"), {
@@ -1279,21 +1765,29 @@
             btn.querySelector("span").textContent = "Проверить подписку";
           });
 
+        // ═══ FINAL MODAL ═══
         function showFinalModal() {
           killAllLotties();
           const ov = document.getElementById("modal-final");
-          const pName = winnerPrize
+          const pN = winnerPrize
             ? winnerPrize.name
             : USER_STATE?.prize_name || "Приз";
-          document.getElementById("final-prize-name").textContent = pName;
-          const tUrl = winnerPrize
+          document.getElementById("final-prize-name").textContent = pN;
+          const tU = winnerPrize
             ? winnerPrize.tgs
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.tgs;
           const em = winnerPrize
             ? winnerPrize.emoji
             : PRIZES.find((p) => p.key === USER_STATE?.prize_key)?.emoji;
-          if (tUrl)
-            playLottie(document.getElementById("final-sticker"), tUrl, em);
+          if (tU) playLottie(document.getElementById("final-sticker"), tU, em);
+
+          if (!claimedAtUnix) {
+            claimedAtUnix = USER_STATE?.claimed_at || Date.now() / 1000;
+          }
+          refCount = USER_STATE?.referral_count || refCount || 0;
+          timerSpeed = calcSpeed(refCount);
+          startTimer();
+
           ov.classList.remove("hidden");
           gsap.from(ov.querySelector(".modal-box"), {
             scale: 0.5,
@@ -1302,14 +1796,160 @@
             duration: 0.4,
             ease: "back.out(1.7)",
           });
-          confetti({
-            particleCount: 100,
-            spread: 100,
-            origin: { y: 0.5 },
+          confetti({ particleCount: 100, spread: 100, origin: { y: 0.5 } });
+        }
+
+        // ═══ SPEEDUP MODAL ═══
+        document
+          .getElementById("btn-speedup")
+          .addEventListener("click", showSpeedupModal);
+
+        function showSpeedupModal() {
+          document.getElementById("su-ref-count").textContent = refCount;
+          document.getElementById("su-speed").textContent = "x" + timerSpeed;
+
+          // Progress bar
+          const fill = Math.min(refCount / 8, 1) * 100;
+          document.getElementById("ref-fill").style.width = fill + "%";
+
+          // Milestones
+          [
+            ["ms-2", 2],
+            ["ms-4", 4],
+            ["ms-6", 6],
+            ["ms-8", 8],
+          ].forEach(([id, n]) => {
+            const el = document.getElementById(id);
+            if (refCount >= n) el.classList.add("reached");
+            else el.classList.remove("reached");
+          });
+
+          const ov = document.getElementById("modal-speedup");
+          ov.classList.remove("hidden");
+          gsap.from(ov.querySelector(".modal-box"), {
+            scale: 0.5,
+            y: 30,
+            opacity: 0,
+            duration: 0.4,
+            ease: "back.out(1.7)",
           });
         }
 
-        // ═══ RAYS ═══
+        document.getElementById("btn-share").addEventListener("click", () => {
+          const uid = USER_STATE?.telegram_id || 0;
+          const refLink = `https://t.me/${BOT_USERNAME}?start=ref_${uid}`;
+          const shareText = "🎁 Крути рулетку и получи бесплатный подарок!";
+          const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`;
+          try {
+            Telegram.WebApp.openTelegramLink(shareUrl);
+          } catch (e) {
+            window.open(shareUrl, "_blank");
+          }
+        });
+
+        document
+          .getElementById("btn-back-speedup")
+          .addEventListener("click", () => {
+            const ov = document.getElementById("modal-speedup");
+            gsap.to(ov.querySelector(".modal-box"), {
+              scale: 0,
+              opacity: 0,
+              duration: 0.2,
+              onComplete() {
+                ov.classList.add("hidden");
+              },
+            });
+          });
+
+        // ═══ STARS MODAL ═══
+        let starsContent = "",
+          starsLoaded = false;
+
+        document
+          .getElementById("btn-earn-stars")
+          .addEventListener("click", async () => {
+            const ov = document.getElementById("modal-stars");
+            ov.classList.remove("hidden");
+            gsap.from(ov, { opacity: 0, duration: 0.25 });
+
+            if (isAdmin)
+              document
+                .getElementById("btn-edit-stars")
+                .classList.remove("hidden");
+
+            if (!starsLoaded) {
+              try {
+                const res = await api("get-page", { key: "earn_stars" });
+                starsContent = res.content || "";
+                document.getElementById("stars-content").textContent =
+                  starsContent;
+                starsLoaded = true;
+              } catch (e) {
+                document.getElementById("stars-content").textContent =
+                  "Ошибка загрузки";
+              }
+            }
+          });
+
+        document
+          .getElementById("btn-close-stars")
+          .addEventListener("click", () => {
+            const ov = document.getElementById("modal-stars");
+            gsap.to(ov, {
+              opacity: 0,
+              duration: 0.2,
+              onComplete() {
+                ov.classList.add("hidden");
+                ov.style.opacity = "";
+              },
+            });
+            document.getElementById("stars-edit-wrap").classList.add("hidden");
+            document.getElementById("stars-content").classList.remove("hidden");
+          });
+
+        // Admin edit
+        document
+          .getElementById("btn-edit-stars")
+          .addEventListener("click", () => {
+            document.getElementById("stars-textarea").value = starsContent;
+            document.getElementById("stars-content").classList.add("hidden");
+            document
+              .getElementById("stars-edit-wrap")
+              .classList.remove("hidden");
+          });
+
+        document
+          .getElementById("btn-cancel-edit")
+          .addEventListener("click", () => {
+            document.getElementById("stars-edit-wrap").classList.add("hidden");
+            document.getElementById("stars-content").classList.remove("hidden");
+          });
+
+        document
+          .getElementById("btn-save-stars")
+          .addEventListener("click", async () => {
+            const newContent = document.getElementById("stars-textarea").value;
+            const btn = document.getElementById("btn-save-stars");
+            btn.textContent = "Сохраняем...";
+            btn.disabled = true;
+            try {
+              await api("save-page", {
+                key: "earn_stars",
+                content: newContent,
+              });
+              starsContent = newContent;
+              document.getElementById("stars-content").textContent = newContent;
+              toast("Сохранено!", "success");
+            } catch (e) {
+              toast("Ошибка сохранения");
+            }
+            btn.textContent = "💾 Сохранить";
+            btn.disabled = false;
+            document.getElementById("stars-edit-wrap").classList.add("hidden");
+            document.getElementById("stars-content").classList.remove("hidden");
+          });
+
+        // ═══ Rays ═══
         const raysBox = document.getElementById("rays-container");
         for (let i = 0; i < 12; i++) {
           const r = document.createElement("div");
@@ -1325,13 +1965,16 @@
             Telegram.WebApp.setHeaderColor("#ffffff");
             Telegram.WebApp.setBackgroundColor("#ffffff");
           } catch (e) {}
-
           try {
             const res = await api("get-user");
             if (res.ok) {
               USER_STATE = res.user;
               CHANNELS = res.channels || [];
               PRIZES = res.prizes || [];
+              isAdmin = res.user.is_admin || false;
+              refCount = res.user.referral_count || 0;
+              timerSpeed = calcSpeed(refCount);
+              if (res.user.claimed_at) claimedAtUnix = res.user.claimed_at;
             }
           } catch (e) {
             PRIZES = [
@@ -1420,16 +2063,13 @@
             await loadTGS(MAIN_TGS);
             await Promise.all(PRIZES.map((p) => loadTGS(p.tgs)));
           } else {
-            const prizeUrl = PRIZES.find(
-              (p) => p.key === USER_STATE.prize_key,
-            )?.tgs;
-            if (prizeUrl) await loadTGS(prizeUrl);
+            const pu = PRIZES.find((p) => p.key === USER_STATE.prize_key)?.tgs;
+            if (pu) await loadTGS(pu);
           }
 
           const ls = document.getElementById("loading-screen");
           ls.style.opacity = "0";
           setTimeout(() => ls.classList.add("hidden"), 300);
-
           try {
             Telegram.WebApp.ready();
           } catch (e) {}
@@ -1451,7 +2091,6 @@
             MAIN_TGS,
             MAIN_EMOJI,
           );
-
           gsap.from("#star-area", {
             scale: 0,
             duration: 0.8,
@@ -1470,28 +2109,25 @@
             delay: 0.6,
           });
         }
-
         init();
 
         // ═══ TAP ═══
         let taps = 0,
           finished = false;
-        const starWrapper = document.getElementById("star-wrapper");
-        const starEl = document.getElementById("star-container");
-        const glowEl = document.getElementById("glow");
-        const progressFill = document.getElementById("progress-fill");
-        const counterText = document.getElementById("counter-text");
+        const starWrapper = document.getElementById("star-wrapper"),
+          starEl = document.getElementById("star-container"),
+          glowEl = document.getElementById("glow");
+        const progressFill = document.getElementById("progress-fill"),
+          counterText = document.getElementById("counter-text");
 
         starWrapper.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           if (finished) return;
           taps++;
           const p = taps / MAX_TAPS;
-
           try {
             Telegram.WebApp.HapticFeedback.impactOccurred("medium");
           } catch (e) {}
-
           const sc = 1 + taps * 0.06;
           gsap.to(starEl, {
             scale: sc + 0.12,
@@ -1503,64 +2139,47 @@
                 ease: "back.out(2)",
               }),
           });
-
           gsap.to(glowEl, {
             scale: 1 + p * 0.9,
             opacity: 0.5 + p * 0.5,
             duration: 0.15,
           });
-
           progressFill.style.width = `${p * 100}%`;
           counterText.textContent = `${taps} / ${MAX_TAPS}`;
-
           showTapEffect(e.clientX, e.clientY);
           burstCSS(e.clientX, e.clientY, PARTICLE_COUNT);
-
           if (taps < MAX_TAPS) addShake(2 + taps * 0.5);
-
           if (taps >= MAX_TAPS) {
             finished = true;
             startFinale();
           }
         });
 
-        // ═══ FINALE ═══
+        // ═══ Finale ═══
         async function startFinale() {
           freezeShake(25, 3000);
-
-          gsap.to(starEl, {
-            scale: 2.2,
-            duration: 2.5,
-            ease: "power1.in",
-          });
+          gsap.to(starEl, { scale: 2.2, duration: 2.5, ease: "power1.in" });
           gsap.to(glowEl, { scale: 3, opacity: 1, duration: 2.5 });
-
           document
             .querySelectorAll(".ray")
             .forEach((r) => (r.style.animation = "none"));
           gsap.to(".ray", { height: 350, opacity: 1, duration: 2.5 });
-
           await sleep(3000);
-
           confetti({
             particleCount: 40,
             spread: 50,
             origin: { x: 0.5, y: 0.4 },
           });
           killAllLotties();
-
           const flash = document.getElementById("flash");
           flash.style.opacity = "1";
           await sleep(1000);
-
           document.getElementById("main-scene").classList.add("hidden");
           shakeAmt = 0;
           shakeFrozen = false;
-
           initRoulette();
           document.getElementById("roulette-scene").classList.remove("hidden");
           spinRoulette();
-
           await sleep(300);
           flash.style.opacity = "0";
         }
