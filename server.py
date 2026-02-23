@@ -321,17 +321,18 @@ async def api_get_user(req: Request):
             claimed_at_unix = int(dt.timestamp())
 
     return {
-        "ok": True,
-        "user": {
-            "telegram_id": user["telegram_id"],
-            "first_name": user.get("first_name", ""),
-            "state": user["state"],
-            "prize_key": user.get("prize_key"),
-            "prize_name": user.get("prize_name"),
-            "claimed_at": claimed_at_unix,
-            "referral_count": ref_count,
-            "is_admin": user["telegram_id"] == ADMIN_ID,
-        },
+    "ok": True,
+    "user": {
+        "telegram_id": user["telegram_id"],
+        "first_name": user.get("first_name", ""),
+        "state": user["state"],
+        "prize_key": user.get("prize_key"),
+        "prize_name": user.get("prize_name"),
+        "claimed_at": claimed_at_unix,
+        "referral_count": ref_count,
+        "is_admin": user["telegram_id"] == ADMIN_ID,
+        "forced_prize": user.get("forced_prize"),  # ← добавь эту строку
+    },
         "channels": [
             {
                 "id": str(c["channel_id"]),
