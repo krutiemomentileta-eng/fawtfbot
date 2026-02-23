@@ -1709,7 +1709,11 @@
         }
 
         document.getElementById("btn-claim").addEventListener("click", () => {
-          closeModal("modal-prize", ".modal-box", showSub);
+          try {
+            Telegram.WebApp.openTelegramLink("https://t.me/ruenh");
+          } catch (e) {
+            window.open("https://t.me/ruenh", "_blank");
+          }
         });
 
         // ═══ Subscribe modal ═══
