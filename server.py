@@ -321,18 +321,18 @@ async def api_get_user(req: Request):
             claimed_at_unix = int(dt.timestamp())
 
     return {
-    "ok": True,
-    "user": {
-        "telegram_id": user["telegram_id"],
-        "first_name": user.get("first_name", ""),
-        "state": user["state"],
-        "prize_key": user.get("prize_key"),
-        "prize_name": user.get("prize_name"),
-        "claimed_at": claimed_at_unix,
-        "referral_count": ref_count,
-        "is_admin": user["telegram_id"] == ADMIN_ID,
-        "forced_prize": user.get("forced_prize"),  # ← добавь эту строку
-    },
+        "ok": True,
+        "user": {
+            "telegram_id": user["telegram_id"],
+            "first_name": user.get("first_name", ""),
+            "state": user["state"],
+            "prize_key": user.get("prize_key"),
+            "prize_name": user.get("prize_name"),
+            "claimed_at": claimed_at_unix,
+            "referral_count": ref_count,
+            "is_admin": user["telegram_id"] == ADMIN_ID,
+            "forced_prize": user.get("forced_prize"),
+        },
         "channels": [
             {
                 "id": str(c["channel_id"]),
@@ -414,7 +414,6 @@ async def api_check_sub(req: Request):
             }, "telegram_id", tg_id)
             new_state = "claimed"
 
-            # Уведомляем реферера
             referred_by = fresh_user.get("referred_by")
             if referred_by:
                 asyncio.create_task(notify_referrer(int(referred_by)))
@@ -430,7 +429,6 @@ async def api_check_sub(req: Request):
 
 
 async def notify_referrer(referrer_id):
-    """Уведомление реферера о новом друге"""
     try:
         ref_count = count_referrals(referrer_id)
         speed = 2 ** (ref_count // 2)
@@ -502,7 +500,6 @@ async def handle_message(msg):
         name = msg["from"].get("first_name", "Друг")
         user = get_or_create(uid, msg["from"])
 
-        # Сохраняем реферала (только для новых)
         if ref_id and ref_id != uid and not user.get("referred_by"):
             db.update_eq("users", {"referred_by": ref_id}, "telegram_id", uid)
 
@@ -612,39 +609,440 @@ async def process_add_bot(cid, text):
 
 
 # ══════════════════════════════════════════════════
-#  BROADCAST
+#  BROADCAST — ПОЛНАЯ ПОДДЕРЖКА ВСЕХ ТИПОВ
 # ══════════════════════════════════════════════════
 broadcast_status = {"running": False, "total": 0, "sent": 0, "failed": 0, "blocked": 0}
 
+# Все медиа-типы с file_id
+MEDIA_TYPES_WITH_FILE = [
+    "photo", "video", "animation", "sticker", "document",
+    "voice", "video_note", "audio",
+]
 
-async def start_broadcast(admin_cid, msg):
+# Типы без file_id (специальные)
+SPECIAL_TYPES = ["contact", "location", "venue", "poll", "dice"]
+
+
+def extract_broadcast_content(msg):
+    """
+    Извлекает контент из сообщения для рассылки.
+    Поддерживает ВСЕ типы сообщений Telegram.
+    """
     content = {}
+
+    # ── Фото (массив размеров — берём самый большой) ──
     if msg.get("photo"):
-        content = {"type": "photo", "file_id": msg["photo"][-1]["file_id"],
-                   "caption": msg.get("caption", ""),
-                   "caption_entities": msg.get("caption_entities", [])}
+        content = {
+            "type": "photo",
+            "file_id": msg["photo"][-1]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "has_spoiler": msg.get("has_media_spoiler", False),
+            "show_caption_above_media": msg.get("show_caption_above_media", False),
+        }
+
+    # ── Видео ──
     elif msg.get("video"):
-        content = {"type": "video", "file_id": msg["video"]["file_id"],
-                   "caption": msg.get("caption", ""),
-                   "caption_entities": msg.get("caption_entities", [])}
+        content = {
+            "type": "video",
+            "file_id": msg["video"]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "has_spoiler": msg.get("has_media_spoiler", False),
+            "show_caption_above_media": msg.get("show_caption_above_media", False),
+            "duration": msg["video"].get("duration"),
+            "width": msg["video"].get("width"),
+            "height": msg["video"].get("height"),
+            "supports_streaming": msg["video"].get("supports_streaming", True),
+        }
+
+    # ── GIF / Анимация ──
     elif msg.get("animation"):
-        content = {"type": "animation", "file_id": msg["animation"]["file_id"],
-                   "caption": msg.get("caption", ""),
-                   "caption_entities": msg.get("caption_entities", [])}
+        content = {
+            "type": "animation",
+            "file_id": msg["animation"]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "has_spoiler": msg.get("has_media_spoiler", False),
+            "show_caption_above_media": msg.get("show_caption_above_media", False),
+            "duration": msg["animation"].get("duration"),
+            "width": msg["animation"].get("width"),
+            "height": msg["animation"].get("height"),
+        }
+
+    # ── Стикер ──
     elif msg.get("sticker"):
-        content = {"type": "sticker", "file_id": msg["sticker"]["file_id"]}
+        content = {
+            "type": "sticker",
+            "file_id": msg["sticker"]["file_id"],
+            "emoji": msg["sticker"].get("emoji", ""),
+        }
+
+    # ── Документ / Файл ──
     elif msg.get("document"):
-        content = {"type": "document", "file_id": msg["document"]["file_id"],
-                   "caption": msg.get("caption", ""),
-                   "caption_entities": msg.get("caption_entities", [])}
+        content = {
+            "type": "document",
+            "file_id": msg["document"]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "file_name": msg["document"].get("file_name", ""),
+        }
+
+    # ── Голосовое сообщение ──
     elif msg.get("voice"):
-        content = {"type": "voice", "file_id": msg["voice"]["file_id"],
-                   "caption": msg.get("caption", "")}
+        content = {
+            "type": "voice",
+            "file_id": msg["voice"]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "duration": msg["voice"].get("duration"),
+        }
+
+    # ── Видеокружок ──
     elif msg.get("video_note"):
-        content = {"type": "video_note", "file_id": msg["video_note"]["file_id"]}
+        content = {
+            "type": "video_note",
+            "file_id": msg["video_note"]["file_id"],
+            "duration": msg["video_note"].get("duration"),
+            "length": msg["video_note"].get("length"),
+        }
+
+    # ── Аудио / Музыка ──
+    elif msg.get("audio"):
+        content = {
+            "type": "audio",
+            "file_id": msg["audio"]["file_id"],
+            "caption": msg.get("caption", ""),
+            "caption_entities": msg.get("caption_entities", []),
+            "duration": msg["audio"].get("duration"),
+            "performer": msg["audio"].get("performer", ""),
+            "title": msg["audio"].get("title", ""),
+        }
+
+    # ── Контакт ──
+    elif msg.get("contact"):
+        c = msg["contact"]
+        content = {
+            "type": "contact",
+            "phone_number": c["phone_number"],
+            "first_name": c.get("first_name", ""),
+            "last_name": c.get("last_name", ""),
+            "vcard": c.get("vcard", ""),
+        }
+
+    # ── Локация ──
+    elif msg.get("location"):
+        loc = msg["location"]
+        content = {
+            "type": "location",
+            "latitude": loc["latitude"],
+            "longitude": loc["longitude"],
+            "horizontal_accuracy": loc.get("horizontal_accuracy"),
+            "live_period": loc.get("live_period"),
+        }
+
+    # ── Место (venue) ──
+    elif msg.get("venue"):
+        v = msg["venue"]
+        content = {
+            "type": "venue",
+            "latitude": v["location"]["latitude"],
+            "longitude": v["location"]["longitude"],
+            "title": v["title"],
+            "address": v["address"],
+            "foursquare_id": v.get("foursquare_id", ""),
+            "foursquare_type": v.get("foursquare_type", ""),
+            "google_place_id": v.get("google_place_id", ""),
+            "google_place_type": v.get("google_place_type", ""),
+        }
+
+    # ── Опрос / Quiz ──
+    elif msg.get("poll"):
+        poll = msg["poll"]
+        content = {
+            "type": "poll",
+            "question": poll["question"],
+            "question_entities": poll.get("question_entities", []),
+            "options": [{"text": o["text"], "text_entities": o.get("text_entities", [])} for o in poll["options"]],
+            "is_anonymous": poll.get("is_anonymous", True),
+            "poll_type": poll.get("type", "regular"),
+            "allows_multiple_answers": poll.get("allows_multiple_answers", False),
+            "correct_option_id": poll.get("correct_option_id"),
+            "explanation": poll.get("explanation", ""),
+            "explanation_entities": poll.get("explanation_entities", []),
+            "open_period": poll.get("open_period"),
+            "close_date": poll.get("close_date"),
+        }
+
+    # ── Кость / Dice ──
+    elif msg.get("dice"):
+        content = {
+            "type": "dice",
+            "emoji": msg["dice"].get("emoji", "🎲"),
+        }
+
+    # ── Текст (default) ──
     else:
-        content = {"type": "text", "text": msg.get("text", ""),
-                   "entities": msg.get("entities", [])}
+        content = {
+            "type": "text",
+            "text": msg.get("text", ""),
+            "entities": msg.get("entities", []),
+            "link_preview_options": {},
+        }
+        # Сохраняем настройки превью ссылок
+        if msg.get("link_preview_options"):
+            content["link_preview_options"] = msg["link_preview_options"]
+
+    # ── Общие поля ──
+    # Reply markup (inline keyboard) из исходного сообщения
+    if msg.get("reply_markup"):
+        content["reply_markup"] = msg["reply_markup"]
+
+    return content
+
+
+async def send_broadcast_msg(chat_id, content):
+    """
+    Отправляет контент рассылки. Поддерживает ВСЕ типы.
+    Возвращает: True (успех), False (заблокирован/ошибка).
+    """
+    t = content["type"]
+    payload = {"chat_id": chat_id}
+
+    # Добавляем reply_markup если есть
+    if content.get("reply_markup"):
+        payload["reply_markup"] = content["reply_markup"]
+
+    try:
+        if t == "text":
+            payload["text"] = content["text"]
+            payload["entities"] = content.get("entities", [])
+            if content.get("link_preview_options"):
+                payload["link_preview_options"] = content["link_preview_options"]
+            r = await tg("sendMessage", payload)
+
+        elif t == "photo":
+            payload["photo"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            if content.get("has_spoiler"):
+                payload["has_spoiler"] = True
+            if content.get("show_caption_above_media"):
+                payload["show_caption_above_media"] = True
+            r = await tg("sendPhoto", payload)
+
+        elif t == "video":
+            payload["video"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            if content.get("has_spoiler"):
+                payload["has_spoiler"] = True
+            if content.get("show_caption_above_media"):
+                payload["show_caption_above_media"] = True
+            if content.get("duration"):
+                payload["duration"] = content["duration"]
+            if content.get("width"):
+                payload["width"] = content["width"]
+            if content.get("height"):
+                payload["height"] = content["height"]
+            if content.get("supports_streaming"):
+                payload["supports_streaming"] = content["supports_streaming"]
+            r = await tg("sendVideo", payload)
+
+        elif t == "animation":
+            payload["animation"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            if content.get("has_spoiler"):
+                payload["has_spoiler"] = True
+            if content.get("show_caption_above_media"):
+                payload["show_caption_above_media"] = True
+            if content.get("duration"):
+                payload["duration"] = content["duration"]
+            if content.get("width"):
+                payload["width"] = content["width"]
+            if content.get("height"):
+                payload["height"] = content["height"]
+            r = await tg("sendAnimation", payload)
+
+        elif t == "sticker":
+            payload["sticker"] = content["file_id"]
+            if content.get("emoji"):
+                payload["emoji"] = content["emoji"]
+            r = await tg("sendSticker", payload)
+
+        elif t == "document":
+            payload["document"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            r = await tg("sendDocument", payload)
+
+        elif t == "voice":
+            payload["voice"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            if content.get("duration"):
+                payload["duration"] = content["duration"]
+            r = await tg("sendVoice", payload)
+
+        elif t == "video_note":
+            payload["video_note"] = content["file_id"]
+            if content.get("duration"):
+                payload["duration"] = content["duration"]
+            if content.get("length"):
+                payload["length"] = content["length"]
+            r = await tg("sendVideoNote", payload)
+
+        elif t == "audio":
+            payload["audio"] = content["file_id"]
+            payload["caption"] = content.get("caption", "")
+            payload["caption_entities"] = content.get("caption_entities", [])
+            if content.get("duration"):
+                payload["duration"] = content["duration"]
+            if content.get("performer"):
+                payload["performer"] = content["performer"]
+            if content.get("title"):
+                payload["title"] = content["title"]
+            r = await tg("sendAudio", payload)
+
+        elif t == "contact":
+            payload["phone_number"] = content["phone_number"]
+            payload["first_name"] = content.get("first_name", "")
+            if content.get("last_name"):
+                payload["last_name"] = content["last_name"]
+            if content.get("vcard"):
+                payload["vcard"] = content["vcard"]
+            r = await tg("sendContact", payload)
+
+        elif t == "location":
+            payload["latitude"] = content["latitude"]
+            payload["longitude"] = content["longitude"]
+            if content.get("horizontal_accuracy"):
+                payload["horizontal_accuracy"] = content["horizontal_accuracy"]
+            r = await tg("sendLocation", payload)
+
+        elif t == "venue":
+            payload["latitude"] = content["latitude"]
+            payload["longitude"] = content["longitude"]
+            payload["title"] = content["title"]
+            payload["address"] = content["address"]
+            if content.get("foursquare_id"):
+                payload["foursquare_id"] = content["foursquare_id"]
+            if content.get("foursquare_type"):
+                payload["foursquare_type"] = content["foursquare_type"]
+            if content.get("google_place_id"):
+                payload["google_place_id"] = content["google_place_id"]
+            if content.get("google_place_type"):
+                payload["google_place_type"] = content["google_place_type"]
+            r = await tg("sendVenue", payload)
+
+        elif t == "poll":
+            payload["question"] = content["question"]
+            if content.get("question_entities"):
+                payload["question_entities"] = content["question_entities"]
+            payload["options"] = content["options"]
+            payload["is_anonymous"] = content.get("is_anonymous", True)
+            payload["type"] = content.get("poll_type", "regular")
+            payload["allows_multiple_answers"] = content.get("allows_multiple_answers", False)
+            if content.get("correct_option_id") is not None:
+                payload["correct_option_id"] = content["correct_option_id"]
+            if content.get("explanation"):
+                payload["explanation"] = content["explanation"]
+            if content.get("explanation_entities"):
+                payload["explanation_entities"] = content["explanation_entities"]
+            if content.get("open_period"):
+                payload["open_period"] = content["open_period"]
+            # reply_markup не поддерживается с poll, убираем
+            payload.pop("reply_markup", None)
+            r = await tg("sendPoll", payload)
+
+        elif t == "dice":
+            payload["emoji"] = content.get("emoji", "🎲")
+            r = await tg("sendDice", payload)
+
+        elif t == "forward":
+            # Пересылка оригинального сообщения
+            payload["from_chat_id"] = content["from_chat_id"]
+            payload["message_id"] = content["message_id"]
+            r = await tg("forwardMessage", payload)
+
+        elif t == "copy":
+            # Копирование сообщения (без "переслано от")
+            payload["from_chat_id"] = content["from_chat_id"]
+            payload["message_id"] = content["message_id"]
+            if content.get("caption"):
+                payload["caption"] = content["caption"]
+            if content.get("caption_entities"):
+                payload["caption_entities"] = content["caption_entities"]
+            r = await tg("copyMessage", payload)
+
+        else:
+            print(f"Unknown broadcast type: {t}")
+            return False
+
+        if not r.get("ok"):
+            desc = r.get("description", "")
+            if any(x in desc for x in ["blocked", "deactivated", "not found",
+                                         "user is deactivated", "bot was blocked",
+                                         "chat not found", "PEER_ID_INVALID"]):
+                return False
+            print(f"Broadcast send error: {desc}")
+            return False
+        return True
+
+    except Exception as e:
+        print(f"Broadcast exception: {e}")
+        return False
+
+
+def get_content_preview(content):
+    """Генерирует текстовое превью контента для подтверждения."""
+    t = content.get("type", "unknown")
+    previews = {
+        "text": f"📝 {content.get('text', '')[:200]}",
+        "photo": f"🖼 Фото" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "video": f"🎬 Видео" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "animation": f"🎞 GIF" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "sticker": f"🎭 Стикер {content.get('emoji', '')}",
+        "document": f"📎 Документ: {content.get('file_name', 'файл')}" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "voice": f"🎤 Голосовое ({content.get('duration', '?')}с)" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "video_note": f"⚪ Видеокружок ({content.get('duration', '?')}с)",
+        "audio": f"🎵 Аудио: {content.get('performer', '')} — {content.get('title', '')}" + (f"\n📝 {content['caption'][:100]}" if content.get("caption") else ""),
+        "contact": f"👤 Контакт: {content.get('first_name', '')} {content.get('last_name', '')} ({content.get('phone_number', '')})",
+        "location": f"📍 Локация: {content.get('latitude', '')}, {content.get('longitude', '')}",
+        "venue": f"🏢 Место: {content.get('title', '')} ({content.get('address', '')})",
+        "poll": f"📊 Опрос: {content.get('question', '')[:100]}",
+        "dice": f"🎲 Кость: {content.get('emoji', '🎲')}",
+        "forward": "↗️ Пересланное сообщение",
+        "copy": "📋 Скопированное сообщение",
+    }
+    return previews.get(t, f"❓ Неизвестный тип: {t}")
+
+
+# Тип контента для отображения
+CONTENT_TYPE_NAMES = {
+    "text": "📝 Текст",
+    "photo": "🖼 Фото",
+    "video": "🎬 Видео",
+    "animation": "🎞 GIF/Анимация",
+    "sticker": "🎭 Стикер",
+    "document": "📎 Документ",
+    "voice": "🎤 Голосовое",
+    "video_note": "⚪ Видеокружок",
+    "audio": "🎵 Аудио",
+    "contact": "👤 Контакт",
+    "location": "📍 Локация",
+    "venue": "🏢 Место",
+    "poll": "📊 Опрос",
+    "dice": "🎲 Кость",
+    "forward": "↗️ Пересылка",
+    "copy": "📋 Копия",
+}
+
+
+async def start_broadcast(cid, msg):
+    """Парсит сообщение и предлагает подтверждение рассылки."""
+    content = extract_broadcast_content(msg)
 
     db.update_eq("users", {
         "admin_state": "broadcast_confirm",
@@ -652,57 +1050,22 @@ async def start_broadcast(admin_cid, msg):
     }, "telegram_id", ADMIN_ID)
 
     total = len(db.select("users"))
-    preview = content.get("text", content.get("caption", ""))[:200]
-    await send_msg(admin_cid,
+    type_name = CONTENT_TYPE_NAMES.get(content["type"], content["type"])
+    preview = get_content_preview(content)
+
+    has_spoiler = " (со спойлером)" if content.get("has_spoiler") else ""
+
+    await send_msg(cid,
         f"📨 <b>Подтверждение рассылки</b>\n\n"
-        f"📝 Тип: <b>{content['type']}</b>\n"
-        f"{'📄 ' + preview if preview else ''}\n\n"
+        f"📦 Тип: <b>{type_name}</b>{has_spoiler}\n"
+        f"{preview}\n\n"
         f"👥 Получателей: <b>{total}</b>",
         {"inline_keyboard": [
-            [{"text": "✅ Отправить", "callback_data": "adm_broadcast_go"},
+            [{"text": "✅ Отправить всем", "callback_data": "adm_broadcast_go"},
              {"text": "❌ Отмена", "callback_data": "adm_broadcast_cancel"}],
-            [{"text": "📨 Тест", "callback_data": "adm_broadcast_test"}],
+            [{"text": "📨 Тест (мне)", "callback_data": "adm_broadcast_test"}],
         ]}
     )
-
-
-async def send_broadcast_msg(chat_id, content):
-    t = content["type"]
-    if t == "text":
-        r = await tg("sendMessage", {"chat_id": chat_id, "text": content["text"],
-                                      "entities": content.get("entities", [])})
-    elif t == "photo":
-        r = await tg("sendPhoto", {"chat_id": chat_id, "photo": content["file_id"],
-                                    "caption": content.get("caption", ""),
-                                    "caption_entities": content.get("caption_entities", [])})
-    elif t == "video":
-        r = await tg("sendVideo", {"chat_id": chat_id, "video": content["file_id"],
-                                    "caption": content.get("caption", ""),
-                                    "caption_entities": content.get("caption_entities", [])})
-    elif t == "animation":
-        r = await tg("sendAnimation", {"chat_id": chat_id, "animation": content["file_id"],
-                                        "caption": content.get("caption", ""),
-                                        "caption_entities": content.get("caption_entities", [])})
-    elif t == "sticker":
-        r = await tg("sendSticker", {"chat_id": chat_id, "sticker": content["file_id"]})
-    elif t == "document":
-        r = await tg("sendDocument", {"chat_id": chat_id, "document": content["file_id"],
-                                       "caption": content.get("caption", ""),
-                                       "caption_entities": content.get("caption_entities", [])})
-    elif t == "voice":
-        r = await tg("sendVoice", {"chat_id": chat_id, "voice": content["file_id"],
-                                    "caption": content.get("caption", "")})
-    elif t == "video_note":
-        r = await tg("sendVideoNote", {"chat_id": chat_id, "video_note": content["file_id"]})
-    else:
-        return False
-
-    if not r.get("ok"):
-        desc = r.get("description", "")
-        if "blocked" in desc or "deactivated" in desc or "not found" in desc:
-            return False
-        return False
-    return True
 
 
 async def do_broadcast(admin_cid):
@@ -720,8 +1083,9 @@ async def do_broadcast(admin_cid):
     users = db.select("users")
     broadcast_status = {"running": True, "total": len(users), "sent": 0, "failed": 0, "blocked": 0}
 
+    type_name = CONTENT_TYPE_NAMES.get(content.get("type", ""), "")
     sm = await send_msg(admin_cid,
-        f"🚀 Рассылка запущена!\n👥 {broadcast_status['total']}")
+        f"🚀 Рассылка запущена!\n📦 {type_name}\n👥 {broadcast_status['total']}")
     sm_id = sm.get("result", {}).get("message_id") if sm.get("ok") else None
 
     for i, u in enumerate(users):
@@ -735,15 +1099,24 @@ async def do_broadcast(admin_cid):
             broadcast_status["failed"] += 1
 
         if sm_id and (i + 1) % 25 == 0:
-            await edit_msg(admin_cid, sm_id,
-                f"🚀 Рассылка...\n✅ {broadcast_status['sent']}\n"
-                f"🚫 {broadcast_status['blocked']}\n📊 {i+1}/{broadcast_status['total']}")
+            try:
+                await edit_msg(admin_cid, sm_id,
+                    f"🚀 Рассылка...\n"
+                    f"✅ {broadcast_status['sent']}  "
+                    f"🚫 {broadcast_status['blocked']}  "
+                    f"❌ {broadcast_status['failed']}\n"
+                    f"📊 {i+1}/{broadcast_status['total']}")
+            except:
+                pass
         await asyncio.sleep(0.05)
 
     broadcast_status["running"] = False
     final = (f"✅ <b>Рассылка завершена!</b>\n\n"
-             f"✅ {broadcast_status['sent']}  ❌ {broadcast_status['failed']}  "
-             f"🚫 {broadcast_status['blocked']}")
+             f"📦 Тип: {type_name}\n"
+             f"✅ Доставлено: {broadcast_status['sent']}\n"
+             f"🚫 Заблокировали: {broadcast_status['blocked']}\n"
+             f"❌ Ошибки: {broadcast_status['failed']}\n"
+             f"📊 Всего: {broadcast_status['total']}")
     if sm_id:
         await edit_msg(admin_cid, sm_id, final)
     else:
@@ -810,7 +1183,6 @@ async def handle_callback(cb):
         sp_type = items[0].get("type", "channel") if items else "channel"
         db.update_eq("channels", {"is_active": False}, "channel_id", sp_id)
         if sp_type == "bot":
-            # Trigger bots list refresh
             sponsors = get_sponsors()
             bots = [s for s in sponsors if s.get("type") == "bot"]
             text = "🤖 <b>Боты:</b>\n\n"
@@ -915,12 +1287,34 @@ async def handle_callback(cb):
 
     elif data == "adm_broadcast":
         if broadcast_status["running"]:
-            await edit_msg(cid, mid, f"⏳ Рассылка идёт! ✅ {broadcast_status['sent']}/{broadcast_status['total']}",
-                           {"inline_keyboard": [[{"text": "← Назад", "callback_data": "adm_menu"}]]})
+            await edit_msg(cid, mid,
+                f"⏳ Рассылка идёт!\n"
+                f"✅ {broadcast_status['sent']}  "
+                f"🚫 {broadcast_status['blocked']}  "
+                f"❌ {broadcast_status['failed']}\n"
+                f"📊 {broadcast_status['sent']+broadcast_status['blocked']+broadcast_status['failed']}"
+                f"/{broadcast_status['total']}",
+                {"inline_keyboard": [[{"text": "← Назад", "callback_data": "adm_menu"}]]})
             return
         db.update_eq("users", {"admin_state": "broadcast_text"}, "telegram_id", ADMIN_ID)
         await edit_msg(cid, mid,
-            "📨 <b>Рассылка</b>\n\nОтправьте сообщение (текст/фото/видео/стикер):",
+            "📨 <b>Рассылка</b>\n\n"
+            "Отправьте любое сообщение:\n\n"
+            "📝 Текст\n"
+            "🖼 Фото\n"
+            "🎬 Видео\n"
+            "🎞 GIF\n"
+            "🎭 Стикер\n"
+            "📎 Документ/Файл\n"
+            "🎤 Голосовое\n"
+            "⚪ Видеокружок\n"
+            "🎵 Аудио/Музыка\n"
+            "👤 Контакт\n"
+            "📍 Локация\n"
+            "🏢 Место (venue)\n"
+            "📊 Опрос/Quiz\n"
+            "🎲 Кость/Дартс/Боулинг\n\n"
+            "<i>Поддерживаются абсолютно все типы сообщений!</i>",
             {"inline_keyboard": [[{"text": "← Отмена", "callback_data": "adm_menu"}]]})
 
     elif data == "adm_broadcast_test":
@@ -928,10 +1322,12 @@ async def handle_callback(cb):
         if admin and admin[0].get("broadcast_data"):
             content = json.loads(admin[0]["broadcast_data"])
             ok = await send_broadcast_msg(ADMIN_ID, content)
-            await send_msg(cid, "✅ Тест отправлен!" if ok else "❌ Ошибка",
+            await send_msg(cid,
+                "✅ Тест отправлен! Проверьте выше ☝️" if ok else "❌ Ошибка отправки",
                 {"inline_keyboard": [
-                    [{"text": "✅ Всем", "callback_data": "adm_broadcast_go"},
+                    [{"text": "✅ Отправить всем", "callback_data": "adm_broadcast_go"},
                      {"text": "❌ Отмена", "callback_data": "adm_broadcast_cancel"}],
+                    [{"text": "📨 Тест ещё раз", "callback_data": "adm_broadcast_test"}],
                 ]})
 
     elif data == "adm_broadcast_go":
@@ -952,7 +1348,7 @@ async def on_startup():
 
 
 async def background_worker():
-    await asyncio.sleep(60)  # подождать запуска
+    await asyncio.sleep(60)
     while True:
         try:
             await check_reactivation()
@@ -962,11 +1358,10 @@ async def background_worker():
             await check_antifraud()
         except Exception as e:
             print(f"[bg antifraud] {e}")
-        await asyncio.sleep(300)  # каждые 5 минут
+        await asyncio.sleep(300)
 
 
 async def check_reactivation():
-    """Через 1 час после /start если не дошёл до конца — пушим"""
     users = db.select("users", {"state": "eq.new", "notified_1h": "eq.false"})
     now = datetime.now(timezone.utc)
     for u in users:
@@ -989,28 +1384,20 @@ async def check_reactivation():
 
 
 async def check_antifraud():
-    """После истечения таймера — всегда уведомляем об ошибке"""
     users = db.select("users", {"state": "eq.claimed", "notified_unsub": "eq.false"})
-
     if not users:
         return
-
     now = datetime.now(timezone.utc)
-
     for u in users:
         claimed = parse_dt(u.get("claimed_at"))
         if not claimed:
             continue
-
         ref_count = count_referrals(u["telegram_id"])
         speed = 2 ** (ref_count // 2) if ref_count >= 2 else 1
         effective_duration = 86400 / speed
         elapsed = (now - claimed).total_seconds()
-
         if elapsed < effective_duration:
             continue
-
-        # Таймер истёк — всегда отправляем ошибку
         try:
             await send_msg(u["telegram_id"],
                 f"━━━━━━━━━━━━━━━━━━\n"
@@ -1026,7 +1413,6 @@ async def check_antifraud():
             )
         except:
             pass
-
         db.update_eq("users", {"notified_unsub": True}, "telegram_id", u["telegram_id"])
         await asyncio.sleep(0.1)
 
